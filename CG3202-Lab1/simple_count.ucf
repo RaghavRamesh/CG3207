@@ -1,0 +1,15 @@
+# Clock signal
+NET "clock"   LOC = "E3"	| IOSTANDARD = "LVCMOS33"; #CLK100MHZ
+NET "clock" TNM_NET = sys_clk_pin;
+TIMESPEC TS_sys_clk_pin = PERIOD sys_clk_pin 100 MHz HIGH 50%; 
+ 
+# LEDs
+NET "leds<0>"			LOC = "T8"	| IOSTANDARD = "LVCMOS33"; #LED0
+NET "leds<1>"			LOC = "V9"	| IOSTANDARD = "LVCMOS33"; #LED1
+NET "leds<2>"			LOC = "R8"	| IOSTANDARD = "LVCMOS33"; #LED2
+NET "leds<3>"			LOC = "T6"	| IOSTANDARD = "LVCMOS33"; #LED3
+
+# Buttons
+NET "enable"				LOC = "E16"	| IOSTANDARD = "LVCMOS33"; #BTNC
+NET "rst"					LOC = "T16" | IOSTANDARD = "LVCMOS33"; #BTNL
+NET "dir"					LOC = "R10" | IOSTANDARD = "LVCMOS33"; #BTNR
