@@ -16,22 +16,36 @@ signal count: std_logic_vector (29 downto 0) := (others=>'0');
 
 begin
  
-process (clock, rst) 
-variable direction: std_logic := '0';
+process (clock) 
+variable currDirection : std_logic := '0';
+variable prevDir : std_logic := '1';
 
 begin	
-	if rst = '1' then
-		count <= (others => '0');
-   elsif clock'event and clock = '1' then
-      if enable='0' then	
-			if direction = '0' then
+	if clock'event and clock = '1' then	
+		if enable='0' then
+			-- decide counting direction
+			if currDirection = '0' then
 				count <= count + 1;
-			elsif direction = '1' then
+			elsif currDirection = '1' then
 				count <= count - 1;
 			end if;
-			if dir = '1' then
-				direction := not direction;
+			
+			-- reset to '00..00' if counting up and '11..11' if counting down
+			if rst = '1' then
+				if currDirection = '0' then
+					count <= (others => '0');
+				elsif currDirection = '1' then
+					count <= (others => '1');
+				end if;
 			end if;
+			
+			-- change direction if the previous value of the dir pin was the opposite 
+			if dir = '1' and prevDir = not dir then
+				currDirection := not currDirection;
+			end if;
+			
+			-- store the current value of the dir pin
+			prevDir := dir;
       end if;	
    end if;
 end process;
