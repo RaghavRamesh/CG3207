@@ -168,7 +168,7 @@ case state is
 			C_in <= '1';
 			Result1 <= S;
 			-- overflow
-			-- Status(1) <= <for you to implement>
+			Status(1) <= ( Operand1(width-1) xor Operand2(width-1) ) and ( Operand2(width-1) xnor S(width-1) );
 			--zero
 			if S = x"00000000" then 
 				Status(0) <= '1'; 
