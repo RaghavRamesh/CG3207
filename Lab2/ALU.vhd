@@ -126,8 +126,8 @@ COMBINATIONAL_PROCESS : process (
 											S, -- ouput from the adder (or other components)
 											Result1_multi, Result2_multi, Debug_multi, done -- from multi-cycle process(es)
 											)
+variable overflow : std_logic;
 begin
-
 -- <default outputs>
 Status(2 downto 0) <= "000"; -- both statuses '0' by default 
 Result1 <= (others=>'0');
@@ -168,12 +168,29 @@ case state is
 			C_in <= '1';
 			Result1 <= S;
 			-- overflow
-			-- Status(1) <= <for you to implement>
+			Status(1) <= ( Operand1(width-1) xor Operand2(width-1) ) and ( Operand2(width-1) xnor S(width-1) );
 			--zero
 			if S = x"00000000" then 
 				Status(0) <= '1'; 
 			else
 				Status(0) <= '0';
+			end if;
+		when "00111" =>
+			B <= not (Operand2);
+			C_in <=  '1';
+			overflow :=( Operand1(width-1) xor Operand2(width-1) ) and ( Operand2(width-1) xnor S(width-1) );
+			if overflow = '1' or (overflow = '0' and S(width - 1) = '1') then 
+				Result1 <= x"00000001"; 
+			else
+				Result1 <= x"00000000";
+			end if;
+		when "01110" =>
+			B <= not (Operand2);
+			C_in <=  '1';
+			if S(width - 1) = '1' then 
+				Result1 <= x"00000001"; 
+			else
+				Result1 <= x"00000000";
 			end if;
 		-- multi-cycle operations
 		when "10000" | "11110" | "01101" |"00101" | "01001" => 
