@@ -569,4 +569,3 @@ begin
 		else
 		     I;
 end shifter_arch;
-
