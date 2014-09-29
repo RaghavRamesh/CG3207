@@ -116,7 +116,7 @@ shifter1_2 : shifter generic map (width =>  2*width, shift_width => 1) port map 
 ----------------------------------------------------------------------------
 COMBINATIONAL_PROCESS : process (
 											Control, Operand1, Operand2, state, -- external inputs
-											S, -- ouput from the adder (or other components)
+											S, C_out,-- ouput from the adder (or other components)
 											Result1_multi, Result2_multi, Debug_multi, done -- from multi-cycle process(es)
 											)
 variable overflow : std_logic;
@@ -230,7 +230,15 @@ variable extended_sum : std_logic_vector (width downto 0) := (others => '0');
 variable div_last_bit : std_logic := '0';
 begin  
    if (Clk'event and Clk = '1') then 
+	if Control(5)= '1' then
+    count :=(others=> '0');
+    temp_sum :=(others=> '0');
+	end if;
 	done <= '0';
+	if Control(5)= '1' then
+    count :=(others=> '0');
+    temp_sum :=(others=> '0');
+	end if;
 		if n_state = MULTI_CYCLE then
 			case Control(4 downto 0) is
 			-- MULT
@@ -327,8 +335,6 @@ begin
 					remainder(2*width-1 downto 0) := O1_2;
 				end if;
 				
-				
-				Debug <= remainder(2*width-1 downto width);
 				if count = "100000" then
 					done <= '1';
 					Result1_multi <= remainder (width -1 downto 0);
@@ -369,8 +375,6 @@ begin
 					remainder(2*width-1 downto 0) := O1_2;
 				end if;
 				
-				Debug <= count;
-				
 				if count = "100000" then
 					done <= '1';
 					if (Operand1(width-1) xor Operand2(width-1)) = '1' then
@@ -410,7 +414,6 @@ begin
 					count := (others => '0');	
 					temp_shift := Operand1;
 				end if;		
-				Debug <= temp_shift;
 				shift_direction <= '0';
 				arith <= '0';
 				e1 <= '0';
@@ -418,21 +421,25 @@ begin
 				e4 <= '0';
 				e8 <= '0';
 				e16 <= '0';
-				I <= temp_shift;
 				if count = "000" then
-					e1 <= Operand2(conv_integer(count));
+					I <= temp_shift;
+					e1 <= Operand2(0);
 				elsif count = "001" then
 					temp_shift := O1;
-					e2 <= Operand2(conv_integer(count));
+					I <= temp_shift;
+					e2 <= Operand2(1);
 				elsif count = "010" then
 					temp_shift := O2;
-					e4 <= Operand2(conv_integer(count));
+					I <= temp_shift;
+					e4 <= Operand2(2);
 				elsif count = "011" then
 					temp_shift := O4;
-					e8 <= Operand2(conv_integer(count));
+					I <= temp_shift;
+					e8 <= Operand2(3);
 				elsif count = "100" then
 					temp_shift := O8;
-					e16 <= Operand2(conv_integer(count));
+					I <= temp_shift;
+					e16 <= Operand2(4);
 				elsif count = "101" then
 					temp_shift := O16;
 					done <= '1';
@@ -444,7 +451,6 @@ begin
 					count := (others => '0');	
 					temp_shift := Operand1;
 				end if;		
-				Debug <= temp_shift;
 				shift_direction <= '1';
 				arith <= '0';
 				e1 <= '0';
@@ -452,21 +458,25 @@ begin
 				e4 <= '0';
 				e8 <= '0';
 				e16 <= '0';
-				I <= temp_shift;
 				if count = "000" then
-					e1 <= Operand2(conv_integer(count));
+					I <= temp_shift;
+					e1 <= Operand2(0);
 				elsif count = "001" then
 					temp_shift := O1;
-					e2 <= Operand2(conv_integer(count));
+					I <= temp_shift;
+					e2 <= Operand2(1);
 				elsif count = "010" then
 					temp_shift := O2;
-					e4 <= Operand2(conv_integer(count));
+					I <= temp_shift;
+					e4 <= Operand2(2);
 				elsif count = "011" then
 					temp_shift := O4;
-					e8 <= Operand2(conv_integer(count));
+					I <= temp_shift;
+					e8 <= Operand2(3);
 				elsif count = "100" then
 					temp_shift := O8;
-					e16 <= Operand2(conv_integer(count));
+					I <= temp_shift;
+					e16 <= Operand2(4);
 				elsif count = "101" then
 					temp_shift := O16;
 					done <= '1';
@@ -478,28 +488,31 @@ begin
 					count := (others => '0');	
 					temp_shift := Operand1;
 				end if;		
-				Debug <= temp_shift;
 				arith <= '1';
 				e1 <= '0';
 				e2 <= '0';
 				e4 <= '0';
 				e8 <= '0';
 				e16 <= '0';
-				I <= temp_shift;
 				if count = "000" then
-					e1 <= Operand2(conv_integer(count));
+					I <= temp_shift;
+					e1 <= Operand2(0);
 				elsif count = "001" then
 					temp_shift := O1;
-					e2 <= Operand2(conv_integer(count));
+					I <= temp_shift;
+					e2 <= Operand2(1);
 				elsif count = "010" then
 					temp_shift := O2;
-					e4 <= Operand2(conv_integer(count));
+					I <= temp_shift;
+					e4 <= Operand2(2);
 				elsif count = "011" then
 					temp_shift := O4;
-					e8 <= Operand2(conv_integer(count));
+					I <= temp_shift;
+					e8 <= Operand2(3);
 				elsif count = "100" then
 					temp_shift := O8;
-					e16 <= Operand2(conv_integer(count));
+					I <= temp_shift;
+					e16 <= Operand2(4);
 				elsif count = "101" then
 					temp_shift := O16;
 					done <= '1';
