@@ -86,7 +86,7 @@ signal e1 	: std_logic := '0';
 signal O1_M	: std_logic_vector(width-1 downto 0) := (others => '0'); 
 signal e1_M 	: std_logic := '0';
 signal I_M 		: std_logic_vector(width-1 downto 0) := (others => '0');
-signal shift_direction_M 	: std_logic := '0'; 
+signal shift_direction_M 	: std_logic := '1'; 
 signal arith_M 	: std_logic := '0';
 signal O1_2	: std_logic_vector(2*width-1 downto 0) := (others => '0'); 
 signal e1_2 	: std_logic := '0';
@@ -409,86 +409,22 @@ begin
 					Debug_multi <= Operand1(width-1 downto width/2) & Operand2(width-1 downto width/2);
 					done <= '1';
 				end if;	
-			when "00101" =>  -- takes 5 cycles to execute, Operand1 << Operand22
+			when "00101" |  "01101" | "01001" =>  -- takes 5 cycles to execute, Operand1 << Operand22
 				if state = COMBINATIONAL then  -- n_state = MULTI_CYCLE and state = COMBINATIONAL implies we are just transitioning into MULTI_CYCLE
 					count := (others => '0');	
 					temp_shift := Operand1;
-				end if;		
-				shift_direction <= '0';
-				arith <= '0';
-				e1 <= '0';
-				e2 <= '0';
-				e4 <= '0';
-				e8 <= '0';
-				e16 <= '0';
-				if count = "000" then
-					I <= temp_shift;
-					e1 <= Operand2(0);
-				elsif count = "001" then
-					temp_shift := O1;
-					I <= temp_shift;
-					e2 <= Operand2(1);
-				elsif count = "010" then
-					temp_shift := O2;
-					I <= temp_shift;
-					e4 <= Operand2(2);
-				elsif count = "011" then
-					temp_shift := O4;
-					I <= temp_shift;
-					e8 <= Operand2(3);
-				elsif count = "100" then
-					temp_shift := O8;
-					I <= temp_shift;
-					e16 <= Operand2(4);
-				elsif count = "101" then
-					temp_shift := O16;
-					done <= '1';
-					Result1_multi <= temp_shift;
-				end if;
-				count := count + 1;
-			when "01101" =>  -- takes 5 cycles to execute, Operand1 >> Operand22
-				if state = COMBINATIONAL then  -- n_state = MULTI_CYCLE and state = COMBINATIONAL implies we are just transitioning into MULTI_CYCLE
-					count := (others => '0');	
-					temp_shift := Operand1;
-				end if;		
-				shift_direction <= '1';
-				arith <= '0';
-				e1 <= '0';
-				e2 <= '0';
-				e4 <= '0';
-				e8 <= '0';
-				e16 <= '0';
-				if count = "000" then
-					I <= temp_shift;
-					e1 <= Operand2(0);
-				elsif count = "001" then
-					temp_shift := O1;
-					I <= temp_shift;
-					e2 <= Operand2(1);
-				elsif count = "010" then
-					temp_shift := O2;
-					I <= temp_shift;
-					e4 <= Operand2(2);
-				elsif count = "011" then
-					temp_shift := O4;
-					I <= temp_shift;
-					e8 <= Operand2(3);
-				elsif count = "100" then
-					temp_shift := O8;
-					I <= temp_shift;
-					e16 <= Operand2(4);
-				elsif count = "101" then
-					temp_shift := O16;
-					done <= '1';
-					Result1_multi <= temp_shift;
-				end if;
-				count := count + 1;
-			when "01001" =>  -- takes 5 cycles to execute, Operand1 >> Operand2 (arithmatic shift)
-				if state = COMBINATIONAL then  -- n_state = MULTI_CYCLE and state = COMBINATIONAL implies we are just transitioning into MULTI_CYCLE
-					count := (others => '0');	
-					temp_shift := Operand1;
-				end if;		
-				arith <= '1';
+				end if;	
+				case Control(4 downto 0) is
+					when "00101" => 
+						shift_direction <= '0';
+						arith <= '0';
+					when "01101" =>
+						shift_direction <= '1';
+						arith <= '0';
+					when others =>
+						shift_direction <= '1';
+						arith <= '1';
+				end case;
 				e1 <= '0';
 				e2 <= '0';
 				e4 <= '0';
