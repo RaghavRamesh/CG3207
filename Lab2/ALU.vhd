@@ -83,9 +83,9 @@ signal O2 	: std_logic_vector(width-1 downto 0) := (others => '0');
 signal e2 	: std_logic := '0';
 signal O1	: std_logic_vector(width-1 downto 0) := (others => '0'); 
 signal e1 	: std_logic := '0';
-signal O1_M	: std_logic_vector(width-1 downto 0) := (others => '0'); 
+signal O1_M	: std_logic_vector(2*width-1 downto 0) := (others => '0'); 
 signal e1_M 	: std_logic := '0';
-signal I_M 		: std_logic_vector(width-1 downto 0) := (others => '0');
+signal I_M 		: std_logic_vector(2*width-1 downto 0) := (others => '0');
 signal shift_direction_M 	: std_logic := '1'; 
 signal arith_M 	: std_logic := '0';
 signal O1_2	: std_logic_vector(2*width-1 downto 0) := (others => '0'); 
@@ -108,7 +108,7 @@ shifter8 : shifter generic map (width =>  width, shift_width => 8) port map (  I
 shifter4 : shifter generic map (width =>  width, shift_width => 4) port map (  I=> I, shift_direction=>shift_direction, arith=>arith, enabled => e4, O=>O4 );
 shifter2 : shifter generic map (width =>  width, shift_width => 2) port map (  I=> I, shift_direction=>shift_direction, arith=>arith, enabled => e2, O=>O2 );
 shifter1 : shifter generic map (width =>  width, shift_width => 1) port map (  I=>I, shift_direction=>shift_direction, arith=>arith, enabled => e1, O=>O1 );
-shifter1_M : shifter generic map (width =>  width, shift_width => 1) port map (  I=>I_M, shift_direction=>shift_direction_M, arith=>arith_M, enabled => e1_M, O=>O1_M );
+shifter1_M : shifter generic map (width =>  2*width, shift_width => 1) port map (  I=>I_M, shift_direction=>shift_direction_M, arith=>arith_M, enabled => e1_M, O=>O1_M );
 shifter1_2 : shifter generic map (width =>  2*width, shift_width => 1) port map (  I=> I_2, shift_direction=>shift_direction_2, arith=>arith_2, enabled => e1_2, O=>O1_2 );
 -- </port maps>
 ----------------------------------------------------------------------------
@@ -146,6 +146,9 @@ case state is
 		--nor
 		when "01100" => 
 			Result1 <= Operand1 nor Operand2;
+		--xor
+		when "00100" => 
+			Result1 <= Operand1 xor Operand2;
 		--add
 		when "00010" =>
 			Result1 <= S;
@@ -221,7 +224,7 @@ MULTI_CYCLE_PROCESS : process (Clk) -- multi-cycle operations done here
 variable count : std_logic_vector(7 downto 0) := (others => '0');
 variable temp_sum : std_logic_vector(2*width-1 downto 0) := (others => '0');
 variable temp_shift : std_logic_vector(width-1 downto 0) := (others => '0');
-variable temp_operand1 : std_logic_vector (width-1 downto 0) := (others => '0');
+variable temp_operand1 : std_logic_vector (2*width-1 downto 0) := (others => '0');
 variable temp_operand2 : std_logic_vector (width-1 downto 0) := (others => '0');
 variable quotient : std_logic_vector (width-1 downto 0) := (others => '0');
 variable divisor : std_logic_vector (width-1 downto 0) := (others => '0');
@@ -247,9 +250,11 @@ begin
 					temp_sum := (others => '0');
 					count := (others => '0');	
 					if Operand1(width-1) = '1' then
-						temp_operand1 := (not Operand1) + 1;
+						temp_operand1(2*width-1 downto width) := (others => '1');
+						temp_operand1(width-1 downto 0) := (not Operand1) + 1;
 					else
-						temp_operand1 := Operand1;
+						temp_operand1(2* width - 1 downto width) := (others => '0');
+						temp_operand1(width - 1 downto 0) := Operand1;
 					end if;
 					if Operand2(width-1) = '1' then
 						temp_operand2 := (not Operand2) + 1;
@@ -257,8 +262,8 @@ begin
 						temp_operand2 := Operand2;
 					end if;		
 				else
-					temp_operand1 := O1;
-					temp_operand2 := O1_M;
+					temp_operand2 := O1;
+					temp_operand1 := O1_M;
 				end if;
 				
 				-- 1. Store first bit of operand 1 and 2.
@@ -277,15 +282,15 @@ begin
 					if temp_operand2(0) = '1' then 
 						temp_sum := temp_sum + temp_operand1;
 					end if;
-					I <= temp_operand1;
-					shift_direction <= '0';
-					arith <= '0';
-					e1 <= '1';
-						
+					I_M <= temp_operand1;
+					shift_direction_M <= '0';
 					arith_M <= '0';
-					I_M <= temp_operand2;
-					shift_direction_M <= '1';
 					e1_M <= '1';
+						
+					arith <= '0';
+					I <= temp_operand2;
+					shift_direction <= '1';
+					e1 <= '1';
 				end if;	
 			
 				count := count+1;	
@@ -294,11 +299,13 @@ begin
 				if state = COMBINATIONAL then  -- n_state = MULTI_CYCLE and state = COMBINATIONAL implies we are just transitioning into MULTI_CYCLE
 					temp_sum := (others => '0');
 					count := (others => '0');	
-					temp_operand1 := Operand1;
+					
+					temp_operand1(2* width - 1 downto width) := (others => '0');
+					temp_operand1(width - 1 downto 0) := Operand1;
 					temp_operand2 := Operand2;		
 				else
-					temp_operand1 := O1;
-					temp_operand2 := O1_M;
+					temp_operand1 := O1_M;
+					temp_operand2 := O1;
 				end if;		
 			
 				if count = "100001" then
@@ -310,15 +317,15 @@ begin
 					if temp_operand2(0) = '1' then 
 						temp_sum := temp_sum + temp_operand1;
 					end if;
-					I <= temp_operand1;
-					shift_direction <= '0';
-					arith <= '0';
-					e1 <= '1';
-						
+					I_M <= temp_operand1;
+					shift_direction_M <= '0';
 					arith_M <= '0';
-					I_M <= temp_operand2;
-					shift_direction_M <= '1';
 					e1_M <= '1';
+						
+					arith <= '0';
+					I <= temp_operand2;
+					shift_direction <= '1';
+					e1 <= '1';
 				end if;	
 			
 				count := count+1;		
