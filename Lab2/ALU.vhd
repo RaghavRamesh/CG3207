@@ -167,25 +167,26 @@ case state is
 			else
 				Status(0) <= '0';
 			end if;
-		--slt
-		when "00111" =>
+		--slt sltu
+		when "00111" | "01110" =>
 			B <= not (Operand2);
 			C_in <=  '1';
-			overflow :=( Operand1(width-1) xor Operand2(width-1) ) and ( Operand2(width-1) xnor S(width-1) );
-			if (overflow = '1' and S(width - 1) = '0') or (overflow = '0' and S(width - 1) = '1') then 
-				Result1 <= x"00000001"; 
-			else
-				Result1 <= x"00000000";
-			end if;
-		--sltu
-		when "01110" =>
-			B <= not (Operand2);
-			C_in <=  '1';
-			if C_out = '0' then 
-				Result1 <= x"00000001"; 
-			else
-				Result1 <= x"00000000";
-			end if;	
+			case Control (4 downto 0) is
+			when "00111" =>
+				overflow :=( Operand1(width-1) xor Operand2(width-1) ) and ( Operand2(width-1) xnor S(width-1) );
+				if (overflow = '1' and S(width - 1) = '0') or (overflow = '0' and S(width - 1) = '1') then 
+					Result1 <= x"00000001"; 
+				else
+					Result1 <= x"00000000";
+				end if;
+			when "01110" => 	
+				if C_out = '0' then 
+					Result1 <= x"00000001"; 
+				else
+					Result1 <= x"00000000";
+				end if;
+			 when others => null;
+			 end case;
 		-- multi-cycle operations
 		when "10000" | "10001" | "11110" | "01101" |"00101" | "01001" | "10011" | "10010" => 
 			n_state <= MULTI_CYCLE;
