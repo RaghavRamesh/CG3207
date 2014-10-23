@@ -26,8 +26,8 @@ entity RegFile is
 				ReadData1_Reg 	: out STD_LOGIC_VECTOR (31 downto 0);
 				ReadData2_Reg 	: out STD_LOGIC_VECTOR (31 downto 0);				
 				WriteAddr_Reg	: in  STD_LOGIC_VECTOR (4 downto 0); 
-				WriteData_Reg 	: in STD_LOGIC_VECTOR (31 downto 0);
-				RegWrite 		: in STD_LOGIC; 
+				WriteData_Reg 	: in  STD_LOGIC_VECTOR (31 downto 0);
+				RegWrite 		: in  STD_LOGIC; 
 				CLK 				: in  STD_LOGIC);
 end RegFile;
 
