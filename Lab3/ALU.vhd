@@ -32,17 +32,17 @@ end ALU;
 architecture arch_ALU of ALU is
 
 begin
-process(ALU_Control, ALU_InA, ALU_InB)
-variable AplusB 	    : STD_LOGIC_VECTOR (31 downto 0);
-variable AminusB 	    : STD_LOGIC_VECTOR (31 downto 0);
-variable suboverflow  : STD_LOGIC;
-variable AorB 		    : STD_LOGIC_VECTOR (31 downto 0);
+process(ALU_Control,ALU_InA,ALU_InB)
+variable AplusB 	: STD_LOGIC_VECTOR (31 downto 0);
+variable AminusB 	: STD_LOGIC_VECTOR (31 downto 0);
+variable suboverflow: STD_LOGIC;
+variable AorB 		: STD_LOGIC_VECTOR (31 downto 0);
 begin
 
-AplusB      := ALU_InA + ALU_InB;
-AminusB     := ALU_InA - ALU_InB;
+AplusB := ALU_InA + ALU_InB;
+AminusB := ALU_InA - ALU_InB;
 suboverflow := ( ALU_InA(31) xor  ALU_InB(31) )  and ( ALU_InB(31) xnor AminusB(31) );
-AorB        := ALU_InA or ALU_InB;
+AorB := ALU_InA or ALU_InB;
 
 ALU_Out <= (others=>'0'); -- default output
 ALU_zero <= '0'; -- default. changed only by BEQ

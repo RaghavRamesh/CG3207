@@ -102,19 +102,19 @@ type MEM_256x32 is array (0 to 255) of std_logic_vector (31 downto 0); -- 256 wo
 -- Instruction Memory
 ----------------------------------------------------------------
 constant INSTR_MEM : MEM_256x32 := (
-			x"3c090000", -- start : lui $t1, 0x0000
-			x"35290001", -- 			ori $t1, 0x0001 # constant 1
-			x"3c081003", -- 			lui $t0, 0x1003 # DIP pointer, for VHDL
-			x"8d0c0000", --			lw  $t4, 0($t0) 
-			x"3c081002", --			lui $t0, 0x1002 # LED pointer, for VHDL
-			x"3c0a0000", -- loop: 	lui $t2, 0x0000
-			x"354a0004", -- 			ori $t2, 0x0004 # delay counter (n). Change according to the clock
-			x"01495022", -- delay: 	sub $t2, $t2, $t1 
-			x"0149582a", -- 			slt $t3, $t2, $t1
-			x"1160fffd", -- 			beq $t3, $zero, delay
-			x"ad0c0000", -- 			sw  $t4, 0($t0)	
-			x"01806027", --			nor $t4, $t4, $zero
-			x"08100005", -- 			j loop # infinite loop; n*3 (delay instructions) + 5 (non-delay instructions).
+			x"3c090000", --0x00400000 start : lui $t1, 0x0000
+			x"35290001", --0x00400100 			ori $t1, 0x0001 # constant 1
+			x"3c081003", --0x00400200 			lui $t0, 0x1003 # DIP pointer, for VHDL
+			x"8d0c0000", --0x00400300			lw  $t4, 0($t0) 
+			x"3c081002", --0x00400400			lui $t0, 0x1002 # LED pointer, for VHDL
+			x"3c0a0000", --0x00400500 loop: 	lui $t2, 0x0000
+			x"354a0004", --0x00400600 			ori $t2, 0x0004 # delay counter (n). Change according to the clock
+			x"01495022", --0x00400700 delay: 	sub $t2, $t2, $t1 
+			x"0149582a", --0x00400800 			slt $t3, $t2, $t1
+			x"1160fffd", --0x00400900 			beq $t3, $zero, delay
+			x"ad0c0000", --0x00400A00 			sw  $t4, 0($t0)	
+			x"01806027", --0x00400B00			nor $t4, $t4, $zero
+			x"08100005", --0x00400C00 			j loop # infinite loop; n*3 (delay instructions) + 5 (non-delay instructions).
 			others=> x"00000000");
 
 -- The Blinky program reads the DIP switches in the begining. Let the value read be VAL

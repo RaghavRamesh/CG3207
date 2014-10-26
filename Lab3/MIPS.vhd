@@ -98,7 +98,7 @@ end component;
 -- PC Signals
 ----------------------------------------------------------------
 	signal	PC_in 		:  STD_LOGIC_VECTOR (31 downto 0);
-	signal	PC_out 		:  STD_LOGIC_VECTOR (31 downto 0);
+	signal	PC_out 		:  STD_LOGIC_VECTOR (31 downto 0) := x"00000000";
 
 ----------------------------------------------------------------
 -- ALU Signals
@@ -208,6 +208,11 @@ RegFile1			: RegFile port map
 -- Processor logic
 ----------------------------------------------------------------
 --<Rest of the logic goes here>
+
+-- Init PC to the last value of PC
+--PC_in <= PC_Out;				
+opcode <= Instr(31 downto 26);
+
 ReadAddr1_Reg <= Instr(25 downto 21);
 ReadAddr2_Reg <= Instr(20 downto 16);
 
@@ -218,24 +223,24 @@ ALU_InA <= ReadData1_Reg when InstrtoReg = '0'
 ALU_InB <= x"00000000" when InstrtoReg = '1'
 			else ReadData2_Reg when ALUSrc = '0'
 			else "0000000000000000" & Instr(15 downto 0) when (ALUSrc = '1' and Instr(15) = '0' and SignExtend = '1') or (ALUSrc = '1' and SignExtend = '1')
-			else "1111111111111111" & Instr(15 downto 0) when (ALUSrc = '1' and Instr(15) = '1' and SignExtend = '1');
+			else "1111111111111111" & Instr(15 downto 0) when (ALUSrc = '1' and Instr(15) = '1' and SignExtend = '1')
+			else "0000000000000000" & Instr(15 downto 0) when (ALUSrc = '1' and SignExtend = '0'); -- ori
 ALU_Control <= ALUOp & Instr(5 downto 0);
 WriteAddr_Reg <= Instr(15 downto 11) when RegDst = '1'
 				else Instr(20 downto 16);
-WriteData_Reg <= ALU_Out when MemtoReg = '0'
-						else Data_In;
+WriteData_Reg <= ALU_Out;
 
 Addr_Data <= ALU_Out;
 
 Data_Out <= ReadData2_Reg;
 
-PC_plus4 <= PC_in + 4;
+PC_plus4 <= PC_out + 4;
 
 PC_in <= PC_plus4(31 downto 28) & Instr(25 downto 0) & "00" when Jump = '1' 
 			else ("00000000000000" & Instr(15 downto 0) & "00") + PC_plus4 when (Branch = '1' and ALU_zero = '1' and Instr(15) = '0')
 			else ("11111111111111" & Instr(15 downto 0) & "00") + PC_plus4 when (Branch = '1' and ALU_zero = '1' and Instr(15) = '1')
 			else PC_plus4;
-Addr_Instr <= PC_out;					
+Addr_Instr <= PC_out;	
 
 
 end arch_MIPS;
