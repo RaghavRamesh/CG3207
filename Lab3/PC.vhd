@@ -32,7 +32,7 @@ begin
 process (CLK, RESET)
 begin
 if RESET = '1' then
-PC_out <= (others=>'0'); 
+	PC_out <= x"00400000"; 
 elsif (CLK'event and CLK='1') then
 	PC_out <= PC_in; 
 end if;

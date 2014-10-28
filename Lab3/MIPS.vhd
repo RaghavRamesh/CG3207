@@ -222,15 +222,18 @@ ALU_InA <= ReadData1_Reg when InstrtoReg = '0'
 			  
 ALU_InB <= x"00000000" when InstrtoReg = '1'
 			else ReadData2_Reg when ALUSrc = '0'
-			else "0000000000000000" & Instr(15 downto 0) when (ALUSrc = '1' and Instr(15) = '0' and SignExtend = '1') or (ALUSrc = '1' and SignExtend = '1')
+			else "0000000000000000" & Instr(15 downto 0) when (ALUSrc = '1' and Instr(15) = '0' and SignExtend = '1')
 			else "1111111111111111" & Instr(15 downto 0) when (ALUSrc = '1' and Instr(15) = '1' and SignExtend = '1')
 			else "0000000000000000" & Instr(15 downto 0) when (ALUSrc = '1' and SignExtend = '0'); -- ori
 ALU_Control <= ALUOp & Instr(5 downto 0);
-WriteAddr_Reg <= Instr(15 downto 11) when RegDst = '1'
-				else Instr(20 downto 16);
-WriteData_Reg <= ALU_Out;
 
 Addr_Data <= ALU_Out;
+
+WriteAddr_Reg <= Instr(15 downto 11) when RegDst = '1'
+				else Instr(20 downto 16);
+WriteData_Reg <= ALU_Out when MemtoReg = '0'
+					  else Data_In when MemtoReg = '1';
+
 
 Data_Out <= ReadData2_Reg;
 
