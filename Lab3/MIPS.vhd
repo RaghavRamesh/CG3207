@@ -51,12 +51,16 @@ end component;
 ----------------------------------------------------------------
 -- ALU
 ----------------------------------------------------------------
-component ALU is
-    Port ( 	
+component ALU_Wrapper is
+    Port ( 	 
+			CLK 				: in  STD_LOGIC;
+			ALU_WrapperControl : in  STD_LOGIC_VECTOR (8 downto 0);
 			ALU_InA 		: in  STD_LOGIC_VECTOR (31 downto 0);				
 			ALU_InB 		: in  STD_LOGIC_VECTOR (31 downto 0);
-			ALU_Out 		: out STD_LOGIC_VECTOR (31 downto 0);
-			ALU_Control	: in  STD_LOGIC_VECTOR (7 downto 0);
+			ALU_OutA 		: out STD_LOGIC_VECTOR (31 downto 0);
+			ALU_OutB 		: out STD_LOGIC_VECTOR (31 downto 0);
+			ALU_busy		: out STD_LOGIC;
+			ALU_overflow		: out STD_LOGIC;
 			ALU_zero		: out STD_LOGIC);
 end component;
 
@@ -66,7 +70,7 @@ end component;
 component ControlUnit is
     Port ( 	
 			opcode 		: in   STD_LOGIC_VECTOR (5 downto 0);
-			ALUOp 		: out  STD_LOGIC_VECTOR (1 downto 0);
+			ALUOp 		: out  STD_LOGIC_VECTOR (2 downto 0);
 			Branch 		: out  STD_LOGIC;
 			Jump	 		: out  STD_LOGIC;				
 			MemRead 		: out  STD_LOGIC;	
@@ -95,6 +99,19 @@ component RegFile is
 end component;
 
 ----------------------------------------------------------------
+-- HILO Registers
+----------------------------------------------------------------
+component HILO is
+    Port ( 	ReadData_High 	: out STD_LOGIC_VECTOR (31 downto 0);
+				ReadData_Lo 	: out STD_LOGIC_VECTOR (31 downto 0);				
+				WriteData_High	: in  STD_LOGIC_VECTOR (31 downto 0); 
+				WriteData_Lo 	: in STD_LOGIC_VECTOR (31 downto 0);
+				HILOWrite 		: in STD_LOGIC; 
+				CLK 				: in  STD_LOGIC);
+end component;
+
+
+----------------------------------------------------------------
 -- PC Signals
 ----------------------------------------------------------------
 	signal	PC_in 		:  STD_LOGIC_VECTOR (31 downto 0);
@@ -104,16 +121,20 @@ end component;
 -- ALU Signals
 ----------------------------------------------------------------
 	signal	ALU_InA 		:  STD_LOGIC_VECTOR (31 downto 0);
+	signal	ALU_WrapperControl 		:  STD_LOGIC_VECTOR (8 downto 0);
 	signal	ALU_InB 		:  STD_LOGIC_VECTOR (31 downto 0);
-	signal	ALU_Out 		:  STD_LOGIC_VECTOR (31 downto 0);
-	signal	ALU_Control	:  STD_LOGIC_VECTOR (7 downto 0);
+	signal	ALU_OutA 		:  STD_LOGIC_VECTOR (31 downto 0);
+	signal	ALU_OutB 		:  STD_LOGIC_VECTOR (31 downto 0);
+	signal	ALU_Control	:  STD_LOGIC_VECTOR (4 downto 0);
 	signal	ALU_zero		:  STD_LOGIC;			
+	signal	ALU_overflow		:  STD_LOGIC;	
+	signal	ALU_busy		:  STD_LOGIC;	
 
 ----------------------------------------------------------------
 -- Control Unit Signals
 ----------------------------------------------------------------				
  	signal	opcode 		:  STD_LOGIC_VECTOR (5 downto 0);
-	signal	ALUOp 		:  STD_LOGIC_VECTOR (1 downto 0);
+	signal	ALUOp 		:  STD_LOGIC_VECTOR (2 downto 0);
 	signal	Branch 		:  STD_LOGIC;
 	signal	Jump	 		:  STD_LOGIC;	
 	signal	MemtoReg 	:  STD_LOGIC;
@@ -132,10 +153,22 @@ end component;
 	signal	ReadData2_Reg 	:  STD_LOGIC_VECTOR (31 downto 0);
 	signal	WriteAddr_Reg	:  STD_LOGIC_VECTOR (4 downto 0); 
 	signal	WriteData_Reg 	:  STD_LOGIC_VECTOR (31 downto 0);
+	
+	
+----------------------------------------------------------------
+-- HILO Register Signals
+----------------------------------------------------------------
+ 	signal	ReadData_High 	:  STD_LOGIC_VECTOR (31 downto 0);
+	signal	ReadData_Lo 	:  STD_LOGIC_VECTOR (31 downto 0);				
+	signal	WriteData_High	:  STD_LOGIC_VECTOR (31 downto 0); 
+	signal	WriteData_Lo 	:  STD_LOGIC_VECTOR (31 downto 0);
+	signal	HILOWrite 		:  STD_LOGIC; 
 
 ----------------------------------------------------------------
 -- Other Signals
 ----------------------------------------------------------------
+
+
 	--<any other signals used goes here>
 
 
@@ -161,12 +194,16 @@ PC1				: PC port map
 ----------------------------------------------------------------
 -- ALU port map
 ----------------------------------------------------------------
-ALU1 				: ALU port map
+ALU_Wrapper1 		: ALU_Wrapper port map
 						(
+						CLK => CLK,
+						ALU_WrapperControl=>ALU_WrapperControl, 
 						ALU_InA 		=> ALU_InA, 
 						ALU_InB 		=> ALU_InB, 
-						ALU_Out 		=> ALU_Out, 
-						ALU_Control => ALU_Control, 
+						ALU_OutA 		=> ALU_OutA,
+						ALU_OutB 		=> ALU_OutB, 
+						ALU_busy  	=> ALU_busy,
+						ALU_overflow  	=> ALU_overflow,
 						ALU_zero  	=> ALU_zero
 						);
 						
@@ -203,6 +240,21 @@ RegFile1			: RegFile port map
 						RegWrite 		=> RegWrite,
 						CLK 				=> CLK				
 						);
+						
+						
+						
+----------------------------------------------------------------
+-- HILO registers port map
+----------------------------------------------------------------
+HILO1			: HILO port map
+						(
+						ReadData_High 	=> ReadData_High,
+						ReadData_Lo => ReadData_Lo,
+						WriteData_High => WriteData_High,
+						WriteData_Lo => WriteData_Lo,
+						HILOWrite => HILOWrite,
+						CLK => CLK
+						);
 
 ----------------------------------------------------------------
 -- Processor logic
@@ -212,7 +264,6 @@ RegFile1			: RegFile port map
 -- Init PC to the last value of PC
 --PC_in <= PC_Out;				
 opcode <= Instr(31 downto 26);
-
 ReadAddr1_Reg <= Instr(25 downto 21);
 ReadAddr2_Reg <= Instr(20 downto 16);
 
@@ -220,18 +271,25 @@ ReadAddr2_Reg <= Instr(20 downto 16);
 ALU_InA <= ReadData1_Reg when InstrtoReg = '0'
 			  else Instr(15 downto 0)&x"0000" when InstrtoReg = '1';
 			  
-ALU_InB <= x"00000000" when InstrtoReg = '1'
-			else ReadData2_Reg when ALUSrc = '0'
-			else "0000000000000000" & Instr(15 downto 0) when (ALUSrc = '1' and Instr(15) = '0' and SignExtend = '1')
-			else "1111111111111111" & Instr(15 downto 0) when (ALUSrc = '1' and Instr(15) = '1' and SignExtend = '1')
+ALU_InB <= 
+			"000000000000000000000000000" & Instr(10 downto 6) when Instr(31 downto 26) = "000000" and (Instr(5 downto 0) = "000000" or Instr(5 downto 0) = "000010" or Instr(5 downto 0) = "000011") -- sll/srl/sra
+			else x"00000000" when InstrtoReg = '1' or Instr(31 downto 26) = "000001" -- lui/bgez/bgezal
+			else ReadData2_Reg when ALUSrc = '0' -- all other r types
+			else "0000000000000000" & Instr(15 downto 0) when (ALUSrc = '1' and Instr(15) = '0' and SignExtend = '1') -- lw/sw
+			else "1111111111111111" & Instr(15 downto 0) when (ALUSrc = '1' and Instr(15) = '1' and SignExtend = '1') -- lw/sw
 			else "0000000000000000" & Instr(15 downto 0) when (ALUSrc = '1' and SignExtend = '0'); -- ori
-ALU_Control <= ALUOp & Instr(5 downto 0);
+ALU_WrapperControl <= ALUOp & Instr(5 downto 0);
 
-Addr_Data <= ALU_Out;
+Addr_Data <= ALU_OutA;
 
 WriteAddr_Reg <= Instr(15 downto 11) when RegDst = '1'
+				else "11111" when (Instr(15 downto 11) = "10001" and Instr(31 downto 26) = "000001") or Instr(31 downto 26) = "000011" 
 				else Instr(20 downto 16);
-WriteData_Reg <= ALU_Out when MemtoReg = '0'
+				
+WriteData_Reg <= ReadData_High when Instr(31 downto 26) = "000000" and Instr(5 downto 0) = "010000" -- MFHI
+					  else ReadData_Lo when Instr(31 downto 26) = "000000" and  Instr(5 downto 0) = "010010" -- MFLO
+					  else PC_plus4  when (Instr(15 downto 11) = "10001" and Instr(31 downto 26) = "000001") or Instr(31 downto 26) = "000011" or (opcode = "000000" and Instr(5 downto 0) = "001001") -- jalr 
+					  else ALU_OutA when MemtoReg = '0'
 					  else Data_In when MemtoReg = '1';
 
 
@@ -239,9 +297,17 @@ Data_Out <= ReadData2_Reg;
 
 PC_plus4 <= PC_out + 4;
 
-PC_in <= PC_plus4(31 downto 28) & Instr(25 downto 0) & "00" when Jump = '1' 
-			else ("00000000000000" & Instr(15 downto 0) & "00") + PC_plus4 when (Branch = '1' and ALU_zero = '1' and Instr(15) = '0')
-			else ("11111111111111" & Instr(15 downto 0) & "00") + PC_plus4 when (Branch = '1' and ALU_zero = '1' and Instr(15) = '1')
+HILOWrite <= '1' when opcode = "000000" and (Instr(5 downto 0) = "011000" or Instr(5 downto 0) = "011001" or Instr(5 downto 0) = "011010" or Instr(5 downto 0) = "011011")
+				else '0';
+				
+WriteData_High <= ALU_OutA;
+WriteData_Lo <= ALU_OutB;
+
+PC_in <= PC_in when ALU_busy = '1'
+			else ReadData1_Reg when opcode = "000000" and (Instr(5 downto 0) = "001000" or Instr(5 downto 0) = "001001") --jr/jral
+			else PC_plus4(31 downto 28) & Instr(25 downto 0) & "00" when Jump = '1' and opcode = "000010" --j
+			else ("00000000000000" & Instr(15 downto 0) & "00") + PC_plus4 when (Branch = '1' and Instr(15) = '0' and ((opcode = "000100" and ALU_zero = '1') or (opcode = "000001" and ALU_OutA(0) = '0'))) --beq / BGEZ
+			else ("11111111111111" & Instr(15 downto 0) & "00") + PC_plus4 when (Branch = '1' and Instr(15) = '1' and ((opcode = "000100" and ALU_zero = '1') or (opcode = "000001" and ALU_OutA(0) = '0'))) --beq / BGEZ
 			else PC_plus4;
 Addr_Instr <= PC_out;	
 

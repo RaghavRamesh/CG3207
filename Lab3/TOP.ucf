@@ -1,3 +1,7 @@
+#####################################
+## Nexys 4 UCF ######################
+#####################################
+
 ## Clock signal
 NET "CLK_undiv"   LOC = "E3"	| IOSTANDARD = "LVCMOS33";					#Bank = 35, Pin name = IO_L12P_T1_MRCC_35,					Sch name = CLK100MHZ
 NET "CLK_undiv" TNM_NET = sys_clk_pin;
