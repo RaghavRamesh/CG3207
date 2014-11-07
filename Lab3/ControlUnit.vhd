@@ -22,7 +22,8 @@ use IEEE.STD_LOGIC_unsigned.ALL;
 entity ControlUnit is
     Port ( 	opcode 		: in  STD_LOGIC_VECTOR (5 downto 0);
 				ALUOp 		: out  STD_LOGIC_VECTOR (2 downto 0);
-				Branch 		: out  STD_LOGIC;		
+				Branch 		: out  STD_LOGIC;	
+				BGEZLINK		: in 	 STD_LOGIC;				
 				Jump	 		: out  STD_LOGIC;	
 				MemRead 		: out  STD_LOGIC;	
 				MemtoReg 	: out  STD_LOGIC;	
@@ -85,6 +86,8 @@ RegWrite <= '1' when opcode = "100011" --lw
 			else '1' when opcode = "001101"  --ori
 			else '1' when opcode = "001111"  --lui			
 			else '1' when opcode = "001010"  --slti
+			else '1' when opcode = "000001" and BGEZLINK = '1'-- bgezal
+			else '1' when opcode = "000011" -- jal
 			else '0'; 
 			
 RegDst <= '1' when opcode = "000000" --rtype

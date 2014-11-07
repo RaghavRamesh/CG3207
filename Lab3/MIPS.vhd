@@ -71,6 +71,7 @@ component ControlUnit is
     Port ( 	
 			opcode 		: in   STD_LOGIC_VECTOR (5 downto 0);
 			ALUOp 		: out  STD_LOGIC_VECTOR (2 downto 0);
+			BGEZLINK	 		: in  STD_LOGIC;
 			Branch 		: out  STD_LOGIC;
 			Jump	 		: out  STD_LOGIC;				
 			MemRead 		: out  STD_LOGIC;	
@@ -143,6 +144,7 @@ end component;
 	signal	SignExtend 	: 	STD_LOGIC;
 	signal	RegWrite		: 	STD_LOGIC;	
 	signal	RegDst		:  STD_LOGIC;
+	signal   BGEZLINK	 		: STD_LOGIC;
 
 ----------------------------------------------------------------
 -- Register File Signals
@@ -214,7 +216,8 @@ ControlUnit1 	: ControlUnit port map
 						(
 						opcode 		=> opcode, 
 						ALUOp 		=> ALUOp, 
-						Branch 		=> Branch, 
+						Branch 		=> Branch,
+						BGEZLINK	 	=> BGEZLINK,						
 						Jump 			=> Jump, 
 						MemRead 		=> MemRead, 
 						MemtoReg 	=> MemtoReg, 
@@ -264,15 +267,18 @@ HILO1			: HILO port map
 -- Init PC to the last value of PC
 --PC_in <= PC_Out;				
 opcode <= Instr(31 downto 26);
+BGEZLINK <= Instr(20);
 ReadAddr1_Reg <= Instr(25 downto 21);
 ReadAddr2_Reg <= Instr(20 downto 16);
 
 
-ALU_InA <= ReadData1_Reg when InstrtoReg = '0'
+ALU_InA <= ReadData2_Reg when Instr(31 downto 26) = "000000" and (Instr(5 downto 0) = "000000" or Instr(5 downto 0) = "000010" or Instr(5 downto 0) = "000011" or Instr(5 downto 0) = "000110"  or Instr(5 downto 0) = "000100"  or Instr(5 downto 0) = "000111" ) -- sll/srl/sra/sllv/srlv/slra 
+			  else ReadData1_Reg when InstrtoReg = '0'
 			  else Instr(15 downto 0)&x"0000" when InstrtoReg = '1';
 			  
 ALU_InB <= 
 			"000000000000000000000000000" & Instr(10 downto 6) when Instr(31 downto 26) = "000000" and (Instr(5 downto 0) = "000000" or Instr(5 downto 0) = "000010" or Instr(5 downto 0) = "000011") -- sll/srl/sra
+			else ReadData1_Reg when Instr(31 downto 26) = "000000" and (Instr(5 downto 0) = "000110"  or Instr(5 downto 0) = "000100"  or Instr(5 downto 0) = "000111" )
 			else x"00000000" when InstrtoReg = '1' or Instr(31 downto 26) = "000001" -- lui/bgez/bgezal
 			else ReadData2_Reg when ALUSrc = '0' -- all other r types
 			else "0000000000000000" & Instr(15 downto 0) when (ALUSrc = '1' and Instr(15) = '0' and SignExtend = '1') -- lw/sw
@@ -283,12 +289,12 @@ ALU_WrapperControl <= ALUOp & Instr(5 downto 0);
 Addr_Data <= ALU_OutA;
 
 WriteAddr_Reg <= Instr(15 downto 11) when RegDst = '1'
-				else "11111" when (Instr(15 downto 11) = "10001" and Instr(31 downto 26) = "000001") or Instr(31 downto 26) = "000011" 
+				else "11111" when (Instr(20 downto 16) = "10001" and Instr(31 downto 26) = "000001") or Instr(31 downto 26) = "000011" 
 				else Instr(20 downto 16);
 				
 WriteData_Reg <= ReadData_High when Instr(31 downto 26) = "000000" and Instr(5 downto 0) = "010000" -- MFHI
 					  else ReadData_Lo when Instr(31 downto 26) = "000000" and  Instr(5 downto 0) = "010010" -- MFLO
-					  else PC_plus4  when (Instr(15 downto 11) = "10001" and Instr(31 downto 26) = "000001") or Instr(31 downto 26) = "000011" or (opcode = "000000" and Instr(5 downto 0) = "001001") -- jalr 
+					  else PC_plus4  when (Instr(20 downto 16) = "10001" and Instr(31 downto 26) = "000001") or Instr(31 downto 26) = "000011" or (opcode = "000000" and Instr(5 downto 0) = "001001") -- jalr 
 					  else ALU_OutA when MemtoReg = '0'
 					  else Data_In when MemtoReg = '1';
 
@@ -300,12 +306,12 @@ PC_plus4 <= PC_out + 4;
 HILOWrite <= '1' when opcode = "000000" and (Instr(5 downto 0) = "011000" or Instr(5 downto 0) = "011001" or Instr(5 downto 0) = "011010" or Instr(5 downto 0) = "011011")
 				else '0';
 				
-WriteData_High <= ALU_OutA;
-WriteData_Lo <= ALU_OutB;
+WriteData_High <= ALU_OutB;
+WriteData_Lo <= ALU_OutA;
 
 PC_in <= PC_in when ALU_busy = '1'
 			else ReadData1_Reg when opcode = "000000" and (Instr(5 downto 0) = "001000" or Instr(5 downto 0) = "001001") --jr/jral
-			else PC_plus4(31 downto 28) & Instr(25 downto 0) & "00" when Jump = '1' and opcode = "000010" --j
+			else PC_plus4(31 downto 28) & Instr(25 downto 0) & "00" when Jump = '1' and (opcode = "000010" or opcode = "000011")--j/jal
 			else ("00000000000000" & Instr(15 downto 0) & "00") + PC_plus4 when (Branch = '1' and Instr(15) = '0' and ((opcode = "000100" and ALU_zero = '1') or (opcode = "000001" and ALU_OutA(0) = '0'))) --beq / BGEZ
 			else ("11111111111111" & Instr(15 downto 0) & "00") + PC_plus4 when (Branch = '1' and Instr(15) = '1' and ((opcode = "000100" and ALU_zero = '1') or (opcode = "000001" and ALU_OutA(0) = '0'))) --beq / BGEZ
 			else PC_plus4;

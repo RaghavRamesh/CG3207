@@ -81,25 +81,23 @@ ALU1 				: ALU port map
 ALU_Control <= "000010" when ALU_WrapperControl(8 downto 6) = "000" or (ALU_WrapperControl(7 downto 6) ="10"and ALU_WrapperControl(5 downto 0) = "100000") -- add
       else "000110" when ALU_WrapperControl(8 downto 6) = "001" or (ALU_WrapperControl(7 downto 6) = "10" and ALU_WrapperControl(5 downto 0) = "100010") -- sub
 		else "000000" when ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "100100" -- and
-		else "000001" when ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "100101" -- or
+		else "000001" when ALU_WrapperControl(8 downto 6) = "011" or (ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "100101") -- lui/ori or or
 		else "000111" when ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "101010" -- slt
 		else "001110" when ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "101011" -- sltu
 		else "001100" when ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "100111" -- nor
-		else "100101" when ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "000000" --sll
-		else "101101" when ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "000010" --srl
-		else "101001" when ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "000011" --sra
-		else "100101" when ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "000100" --sllv
-		else "101101" when ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "000100" --srlv
-		else "101001" when ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "000100" --srav
-		else "110000" when ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "011000" -- mult
-		else "110001" when ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "011001" -- multu
-		else "110010" when ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "011010" -- div
-		else "110011" when ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "011011" -- divu
-		else "000001" when ALU_WrapperControl(8 downto 6) = "011" -- lui/ori;
+		else "000101" when ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "000000" --sll
+		else "001101" when ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "000010" --srl
+		else "001001" when ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "000011" --sra
+		else "000101" when ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "000100" --sllv
+		else "001101" when ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "000110" --srlv
+		else "001001" when ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "000111" --srav
+		else "010000" when ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "011000" -- mult
+		else "010001" when ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "011001" -- multu
+		else "010010" when ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "011010" -- div
+		else "010011" when ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "011011" -- divu
 		else "000111" when ALU_WrapperControl(8 downto 6) = "100" -- slt
 		else "000000";
 ALU_zero <=ALU_status(0);
 ALU_overflow <=ALU_status(1);
 ALU_busy <=ALU_status(2);
 end archALUWrapper;
-
