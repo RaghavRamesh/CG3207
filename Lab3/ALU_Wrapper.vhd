@@ -38,7 +38,9 @@ entity ALU_Wrapper is
            ALU_OutB : out  STD_LOGIC_VECTOR (31 downto 0);
            ALU_busy : out  STD_LOGIC;
            ALU_overflow : out  STD_LOGIC;
-           ALU_zero : out  STD_LOGIC);
+           ALU_unknown : out  STD_LOGIC;
+           ALU_zero : out  STD_LOGIC;
+           RESET : in  STD_LOGIC);
 end ALU_Wrapper;
 
 architecture archALUWrapper of ALU_Wrapper is
@@ -58,7 +60,7 @@ Port (Clk			: in	STD_LOGIC;
 end component;
 
 	signal	ALU_status		:  STD_LOGIC_VECTOR(2 downto 0);		
-	signal	ALU_Control		:  STD_LOGIC_VECTOR(5 downto 0) ;			
+	signal	ALU_Control		:  STD_LOGIC_VECTOR(5 downto 0);			
 
 begin
 
@@ -69,22 +71,24 @@ ALU1 				: ALU port map
 						(
 						CLK => CLK,
 						Control => ALU_Control,
-						Operand1 		=> ALU_InA, 
-						Operand2 		=> ALU_InB, 
-						Result1 		=> ALU_OutA, 
-						Result2 		=> ALU_OutB,  
-						Status  	=> ALU_status
+						Operand1 => ALU_InA, 
+						Operand2 => ALU_InB, 
+						Result1 => ALU_OutA, 
+						Result2 => ALU_OutB,  
+						Status => ALU_status
 						);
 						
 						
 
-ALU_Control <= "000010" when ALU_WrapperControl(8 downto 6) = "000" or (ALU_WrapperControl(7 downto 6) ="10"and ALU_WrapperControl(5 downto 0) = "100000") -- add
-      else "000110" when ALU_WrapperControl(8 downto 6) = "001" or (ALU_WrapperControl(7 downto 6) = "10" and ALU_WrapperControl(5 downto 0) = "100010") -- sub
+ALU_Control <= "100000" when RESET = '1' -- reset
+		else "000010" when ALU_WrapperControl(8 downto 6) = "000" or (ALU_WrapperControl(8 downto 6) ="010"and ALU_WrapperControl(5 downto 0) = "100000") -- add
+      else "000110" when ALU_WrapperControl(8 downto 6) = "001" or (ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "100010") -- sub
 		else "000000" when ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "100100" -- and
 		else "000001" when ALU_WrapperControl(8 downto 6) = "011" or (ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "100101") -- lui/ori or or
 		else "000111" when ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "101010" -- slt
 		else "001110" when ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "101011" -- sltu
 		else "001100" when ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "100111" -- nor
+		else "000100" when ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "100110" --xor
 		else "000101" when ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "000000" --sll
 		else "001101" when ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "000010" --srl
 		else "001001" when ALU_WrapperControl(8 downto 6) = "010" and ALU_WrapperControl(5 downto 0) = "000011" --sra
@@ -100,4 +104,18 @@ ALU_Control <= "000010" when ALU_WrapperControl(8 downto 6) = "000" or (ALU_Wrap
 ALU_zero <=ALU_status(0);
 ALU_overflow <=ALU_status(1);
 ALU_busy <=ALU_status(2);
+
+ALU_unknown <= '0' when ALU_WrapperControl(8 downto 6) = "010" and (ALU_WrapperControl(5 downto 0) = "100000" 
+									or ALU_WrapperControl(5 downto 0) = "100010" or ALU_WrapperControl(5 downto 0) = "100100" or ALU_WrapperControl(5 downto 0) = "100101"
+									or ALU_WrapperControl(5 downto 0) = "101010" or  ALU_WrapperControl(5 downto 0) = "101011" 
+									or ALU_WrapperControl(5 downto 0) = "100111" or ALU_WrapperControl(5 downto 0) = "000000" 
+									or ALU_WrapperControl(5 downto 0) = "000010" or ALU_WrapperControl(5 downto 0) = "000011" 
+									or ALU_WrapperControl(5 downto 0) = "000100" or ALU_WrapperControl(5 downto 0) = "000110" 
+									or ALU_WrapperControl(5 downto 0) = "000111" or ALU_WrapperControl(5 downto 0) = "011000" 
+									or ALU_WrapperControl(5 downto 0) = "011001" or ALU_WrapperControl(5 downto 0) = "011010" 
+									or ALU_WrapperControl(5 downto 0) = "011011" or ALU_WrapperControl(5 downto 0) = "100110")
+					else '1' when ALU_WrapperControl(8 downto 6) = "010"
+					else '0';
+					-- Check for unknown RType Instruction since not all other instructions come to the alu
+		
 end archALUWrapper;

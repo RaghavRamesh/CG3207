@@ -61,7 +61,9 @@ component ALU_Wrapper is
 			ALU_OutB 		: out STD_LOGIC_VECTOR (31 downto 0);
 			ALU_busy		: out STD_LOGIC;
 			ALU_overflow		: out STD_LOGIC;
-			ALU_zero		: out STD_LOGIC);
+         ALU_unknown : out  STD_LOGIC;
+			ALU_zero		: out STD_LOGIC;
+			RESET		: in STD_LOGIC);
 end component;
 
 ----------------------------------------------------------------
@@ -71,7 +73,9 @@ component ControlUnit is
     Port ( 	
 			opcode 		: in   STD_LOGIC_VECTOR (5 downto 0);
 			ALUOp 		: out  STD_LOGIC_VECTOR (2 downto 0);
-			BGEZLINK	 		: in  STD_LOGIC;
+			BGEZLINK	 	: in   STD_LOGIC;
+			CHECK_ERET	: in   STD_LOGIC;
+			CHECK_MFC	: in   STD_LOGIC;
 			Branch 		: out  STD_LOGIC;
 			Jump	 		: out  STD_LOGIC;				
 			MemRead 		: out  STD_LOGIC;	
@@ -81,7 +85,8 @@ component ControlUnit is
 			ALUSrc 		: out  STD_LOGIC;	
 			SignExtend 	: out  STD_LOGIC; -- false for ORI 
 			RegWrite		: out  STD_LOGIC;	
-			RegDst		: out  STD_LOGIC);
+			RegDst		: out  STD_LOGIC;	
+			CU_Unknown	: out  STD_LOGIC);
 end component;
 
 ----------------------------------------------------------------
@@ -111,6 +116,17 @@ component HILO is
 				CLK 				: in  STD_LOGIC);
 end component;
 
+----------------------------------------------------------------
+-- Exception Registers
+----------------------------------------------------------------
+component Exception is
+    Port ( ReadData_Cause : out  STD_LOGIC_VECTOR (31 downto 0);
+           ReadData_EPC : out  STD_LOGIC_VECTOR (31 downto 0);
+           WriteData_Cause : in  STD_LOGIC_VECTOR (31 downto 0);
+           WriteData_EPC : in  STD_LOGIC_VECTOR (31 downto 0);
+           ExceptionReg_Write : in  STD_LOGIC;
+           CLK : in  STD_LOGIC);
+end component;
 
 ----------------------------------------------------------------
 -- PC Signals
@@ -129,6 +145,7 @@ end component;
 	signal	ALU_Control	:  STD_LOGIC_VECTOR (4 downto 0);
 	signal	ALU_zero		:  STD_LOGIC;			
 	signal	ALU_overflow		:  STD_LOGIC;	
+	signal 	ALU_unknown : STD_LOGIC;
 	signal	ALU_busy		:  STD_LOGIC;	
 
 ----------------------------------------------------------------
@@ -144,7 +161,10 @@ end component;
 	signal	SignExtend 	: 	STD_LOGIC;
 	signal	RegWrite		: 	STD_LOGIC;	
 	signal	RegDst		:  STD_LOGIC;
-	signal   BGEZLINK	 		: STD_LOGIC;
+	signal   BGEZLINK	 	:  STD_LOGIC;
+	signal   CHECK_ERET	:  STD_LOGIC;
+	signal   CHECK_MFC	:  STD_LOGIC;
+	signal   CU_Unknown	:  STD_LOGIC;
 
 ----------------------------------------------------------------
 -- Register File Signals
@@ -165,6 +185,18 @@ end component;
 	signal	WriteData_High	:  STD_LOGIC_VECTOR (31 downto 0); 
 	signal	WriteData_Lo 	:  STD_LOGIC_VECTOR (31 downto 0);
 	signal	HILOWrite 		:  STD_LOGIC; 
+	
+	
+----------------------------------------------------------------
+-- Exception Register Signals
+----------------------------------------------------------------
+
+ 	signal	ReadData_Cause 	:  STD_LOGIC_VECTOR (31 downto 0);
+	signal	ReadData_EPC 	:  STD_LOGIC_VECTOR (31 downto 0);				
+	signal	WriteData_Cause	:  STD_LOGIC_VECTOR (31 downto 0); 
+	signal	WriteData_EPC 	:  STD_LOGIC_VECTOR (31 downto 0);
+	signal	ExceptionReg_Write 		:  STD_LOGIC; 
+
 
 ----------------------------------------------------------------
 -- Other Signals
@@ -206,7 +238,9 @@ ALU_Wrapper1 		: ALU_Wrapper port map
 						ALU_OutB 		=> ALU_OutB, 
 						ALU_busy  	=> ALU_busy,
 						ALU_overflow  	=> ALU_overflow,
-						ALU_zero  	=> ALU_zero
+						ALU_unknown		=> ALU_unknown,
+						ALU_zero  	=> ALU_zero,
+						RESET		=> RESET
 						);
 						
 ----------------------------------------------------------------
@@ -217,7 +251,9 @@ ControlUnit1 	: ControlUnit port map
 						opcode 		=> opcode, 
 						ALUOp 		=> ALUOp, 
 						Branch 		=> Branch,
-						BGEZLINK	 	=> BGEZLINK,						
+						BGEZLINK	 	=> BGEZLINK,
+						CHECK_ERET	=> CHECK_ERET,	
+						CHECK_MFC	=> CHECK_MFC,					
 						Jump 			=> Jump, 
 						MemRead 		=> MemRead, 
 						MemtoReg 	=> MemtoReg, 
@@ -226,7 +262,8 @@ ControlUnit1 	: ControlUnit port map
 						ALUSrc 		=> ALUSrc, 
 						SignExtend 	=> SignExtend, 
 						RegWrite 	=> RegWrite, 
-						RegDst 		=> RegDst
+						RegDst 		=> RegDst,
+						CU_Unknown 	=> CU_Unknown
 						);
 						
 ----------------------------------------------------------------
@@ -259,15 +296,30 @@ HILO1			: HILO port map
 						CLK => CLK
 						);
 
+						
+----------------------------------------------------------------
+-- Exception registers port map
+----------------------------------------------------------------
+Exception1	: Exception port map
+						(
+						ReadData_Cause => ReadData_Cause,
+						ReadData_EPC => ReadData_EPC,
+						WriteData_Cause => WriteData_Cause,
+						WriteData_EPC => WriteData_EPC,
+						ExceptionReg_Write => ExceptionReg_Write,
+						CLK => CLK
+						);
+
 ----------------------------------------------------------------
 -- Processor logic
 ----------------------------------------------------------------
 --<Rest of the logic goes here>
 
--- Init PC to the last value of PC
---PC_in <= PC_Out;				
 opcode <= Instr(31 downto 26);
 BGEZLINK <= Instr(20);
+CHECK_ERET <= Instr(25);
+CHECK_MFC <= not Instr(23);
+
 ReadAddr1_Reg <= Instr(25 downto 21);
 ReadAddr2_Reg <= Instr(20 downto 16);
 
@@ -294,6 +346,8 @@ WriteAddr_Reg <= Instr(15 downto 11) when RegDst = '1'
 				
 WriteData_Reg <= ReadData_High when Instr(31 downto 26) = "000000" and Instr(5 downto 0) = "010000" -- MFHI
 					  else ReadData_Lo when Instr(31 downto 26) = "000000" and  Instr(5 downto 0) = "010010" -- MFLO
+					  else ReadData_Cause when Instr(31 downto 21) = "01000000000" and ReadAddr2_Reg = "00000" -- LOAD CAUSE REGISTER
+					  else ReadData_EPC when Instr(31 downto 21) = "01000000000" and ReadAddr2_Reg = "00001" -- LOAD EPC REGISTER
 					  else PC_plus4  when (Instr(20 downto 16) = "10001" and Instr(31 downto 26) = "000001") or Instr(31 downto 26) = "000011" or (opcode = "000000" and Instr(5 downto 0) = "001001") -- jalr 
 					  else ALU_OutA when MemtoReg = '0'
 					  else Data_In when MemtoReg = '1';
@@ -309,11 +363,28 @@ HILOWrite <= '1' when opcode = "000000" and (Instr(5 downto 0) = "011000" or Ins
 WriteData_High <= ALU_OutB;
 WriteData_Lo <= ALU_OutA;
 
+
+				
+ExceptionReg_Write <= '1' when ALU_unknown = '1' or CU_Unknown = '1' or ALU_overflow = '1'
+				else '1'  when Instr(31 downto 21) = "01000000100"
+				else '0';
+WriteData_Cause <= x"00000001" when CU_unknown = '1'
+						 else x"00000002" when ALU_Unknown = '1'
+						 else x"00000003" when ALU_overflow = '1'
+						 else ReadData2_Reg when Instr(15 downto 11) = "00000"
+						 else ReadData_Cause;
+WriteData_EPC <= PC_out when ALU_unknown = '1' or CU_Unknown = '1' or ALU_overflow = '1'
+					  else ReadData2_Reg when Instr(15 downto 11) = "00001"
+					  else ReadData_EPC;
+
+
 PC_in <= PC_in when ALU_busy = '1'
 			else ReadData1_Reg when opcode = "000000" and (Instr(5 downto 0) = "001000" or Instr(5 downto 0) = "001001") --jr/jral
 			else PC_plus4(31 downto 28) & Instr(25 downto 0) & "00" when Jump = '1' and (opcode = "000010" or opcode = "000011")--j/jal
 			else ("00000000000000" & Instr(15 downto 0) & "00") + PC_plus4 when (Branch = '1' and Instr(15) = '0' and ((opcode = "000100" and ALU_zero = '1') or (opcode = "000001" and ALU_OutA(0) = '0'))) --beq / BGEZ
 			else ("11111111111111" & Instr(15 downto 0) & "00") + PC_plus4 when (Branch = '1' and Instr(15) = '1' and ((opcode = "000100" and ALU_zero = '1') or (opcode = "000001" and ALU_OutA(0) = '0'))) --beq / BGEZ
+			else x"FFFFFFFF" when ALU_unknown = '1' or CU_Unknown = '1' or ALU_overflow = '1'
+			else ReadData_EPC when Jump = '1' and opcode = "010000" -- eret
 			else PC_plus4;
 Addr_Instr <= PC_out;	
 
