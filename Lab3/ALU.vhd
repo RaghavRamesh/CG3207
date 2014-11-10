@@ -341,9 +341,9 @@ begin
 				
 				if count = "100000" then
 					done <= '1';
-					Result2_multi <= remainder (width -1 downto 0);
-					Result1_multi(width-1) <= div_last_bit;
-					Result1_multi(width-2 downto 0) <= remainder (2*width -1 downto width + 1);
+					Result1_multi <= remainder (width -1 downto 0);
+					Result2_multi(width-1) <= div_last_bit;
+					Result2_multi(width-2 downto 0) <= remainder (2*width -1 downto width + 1);
 				elsif count /= "100000" then
 					extended_sum := ('0' & remainder(2*width-1 downto width)) + ('0' & not(divisor)) + 1;
 					if extended_sum(width) = '0' then 
@@ -382,15 +382,15 @@ begin
 				if count = "100000" then
 					done <= '1';
 					if (Operand1(width-1) xor Operand2(width-1)) = '1' then
-						Result2_multi <= not remainder(width-1 downto 0) + 1;
+						Result1_multi <= not remainder(width-1 downto 0) + 1;
 					else 
-						Result2_multi <= remainder(width-1 downto 0);
+						Result1_multi <= remainder(width-1 downto 0);
 					end if;
-					Result1_multi(width-1) <= div_last_bit;
+					Result2_multi(width-1) <= div_last_bit;
 					if (Operand1(width-1)) = '1' then
-						Result1_multi(width - 1 downto 0) <= (not (div_last_bit & remainder (2*width -1 downto width + 1))) + 1;
+						Result2_multi(width - 1 downto 0) <= (not (div_last_bit & remainder (2*width -1 downto width + 1))) + 1;
 					else 
-						Result1_multi(width-2 downto 0) <= remainder (2*width -1 downto width + 1);
+						Result2_multi(width-2 downto 0) <= remainder (2*width -1 downto width + 1);
 					end if;
 				elsif count /= "100000" then
 					extended_sum := ('0' & remainder(2*width-1 downto width)) + ('0' & not(divisor)) + 1;

@@ -113,7 +113,9 @@ ALU_unknown <= '0' when ALU_WrapperControl(8 downto 6) = "010" and (ALU_WrapperC
 									or ALU_WrapperControl(5 downto 0) = "000100" or ALU_WrapperControl(5 downto 0) = "000110" 
 									or ALU_WrapperControl(5 downto 0) = "000111" or ALU_WrapperControl(5 downto 0) = "011000" 
 									or ALU_WrapperControl(5 downto 0) = "011001" or ALU_WrapperControl(5 downto 0) = "011010" 
-									or ALU_WrapperControl(5 downto 0) = "011011" or ALU_WrapperControl(5 downto 0) = "100110")
+									or ALU_WrapperControl(5 downto 0) = "011011" or ALU_WrapperControl(5 downto 0) = "100110"
+									or ALU_WrapperControl(5 downto 0) = "001000" or ALU_WrapperControl(5 downto 0) = "010000"
+									or ALU_WrapperControl(5 downto 0) = "010010")
 					else '1' when ALU_WrapperControl(8 downto 6) = "010"
 					else '0';
 					-- Check for unknown RType Instruction since not all other instructions come to the alu

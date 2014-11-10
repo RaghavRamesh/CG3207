@@ -116,22 +116,85 @@ type MEM_256x32 is array (0 to 255) of std_logic_vector (31 downto 0); -- 256 wo
 -- Instruction Memory
 ----------------------------------------------------------------
 constant INSTR_MEM : MEM_256x32 := (
-			x"3c090000", -- start : lui $t1, 0x0000 # constant 1 upper half word. not required if GPRs are reset when RESET is pressed
-			x"35290001", -- 			ori $t1, 0x0001 # constant 1 lower half word
-			x"3c081002", -- 			lui $t0, 0x1002 # DIP address upper half word before offset
-			x"35088001", --			ori $t0, 0x8001 # DIP address lower half word before offset
-			x"8d0c7fff", --			lw  $t4, 0x7fff($t0) # read from DIP address 0x10030000 = 0x10028001 + 0x7fff
-			x"3c081002", --			lui $t0, 0x1002 # LED address upper half word before offset
-			x"35080001", --			ori $t0, 0x0001 # LED address lower half word before offset
-			x"3400ffff", --			ori $zero, 0xffff # writing to zero. should have no effect
-			x"3c0a0000", -- loop: 	lui $t2, 0x0000 # delay counter (n) upper half word if using slow clock
-			x"354a0004", -- 			ori $t2, 0x0004 # delay counter (n) lower half word if using slow clock
-			x"01495022", -- delay: 	sub $t2, $t2, $t1 # begining of delay loop
-			x"0149582a", -- 			slt $t3, $t2, $t1
-			x"1160fffd", -- 			beq $t3, $zero, delay # end of delay loop
-			x"ad0cffff", -- 			sw  $t4, 0xffffffff($t0)	# write to LED address 0x10020000 = 0x10020001 + 0xffffffff.
-			x"01806027", --			nor $t4, $t4, $zero # flip the bits
-			x"08100008", -- 			j loop # infinite loop; # repeats every n*3 (delay instructions) + 5 (non-delay instructions).
+			x"3c081003",
+			x"35080000",
+			x"3c090000",
+			x"35290002",
+			x"8d0c0000",
+			x"3c081002",
+			x"35080001",
+			x"ffffffff",
+			x"3c0a0000",
+			x"354a0000",
+			x"01495020",
+			x"214a0000",
+			x"254a0001",
+			x"3c081002",
+			x"35080000",
+			x"ad0a0000",
+			x"ad090000",
+			x"01490018",
+			x"00005012",
+			x"ad0a0000",
+			x"01490019",
+			x"00001010",
+			x"00005012",
+			x"ad0a0000",
+			x"0149001a",
+			x"00005012",
+			x"ad0a0000",
+			x"0149001b",
+			x"00005012",
+			x"ad0a0000",
+			x"3c0f0000",
+			x"35ef0010",
+			x"000f7903",
+			x"ad0f0000",
+			x"3c090000",
+			x"35290001",
+			x"01495022",
+			x"0149582a",
+			x"1160fffd",
+			x"ad0c0000",
+			x"01806027",
+			x"3c0dffff",
+			x"35adfffd",
+			x"21ad0001",
+			x"05a10001",
+			x"0c10002b",
+			x"3c0dffff",
+			x"35adfffd",
+			x"21ad0001",
+			x"05b10001",
+			x"08100030",
+			x"3c0e0040",
+			x"35ce0020",
+			x"01c0f809",
+			x"3c171002",
+			x"36f70000",
+			x"3c16ffff",
+			x"36d6ffff",
+			x"aef60000",
+			x"4001A800",
+			x"22b50004",
+			x"40950800",
+			x"42000018",
+--			x"3c090000", -- start : lui $t1, 0x0000 # constant 1 upper half word. not required if GPRs are reset when RESET is pressed
+--			x"35290001", -- 			ori $t1, 0x0001 # constant 1 lower half word
+--			x"3c081002", -- 			lui $t0, 0x1002 # DIP address upper half word before offset
+--			x"35088001", --			ori $t0, 0x8001 # DIP address lower half word before offset
+--			x"8d0c7fff", --			lw  $t4, 0x7fff($t0) # read from DIP address 0x10030000 = 0x10028001 + 0x7fff
+--			x"3c081002", --			lui $t0, 0x1002 # LED address upper half word before offset
+--			x"35080001", --			ori $t0, 0x0001 # LED address lower half word before offset
+--			x"3400ffff", --			ori $zero, 0xffff # writing to zero. should have no effect
+--			x"3c0a0000", -- loop: 	lui $t2, 0x0000 # delay counter (n) upper half word if using slow clock
+--			x"354a0004", -- 			ori $t2, 0x0004 # delay counter (n) lower half word if using slow clock
+--			x"01495022", -- delay: 	sub $t2, $t2, $t1 # begining of delay loop
+--			x"0149582a", -- 			slt $t3, $t2, $t1
+--			x"1160fffd", -- 			beq $t3, $zero, delay # end of delay loop
+--			x"ad0cffff", -- 			sw  $t4, 0xffffffff($t0)	# write to LED address 0x10020000 = 0x10020001 + 0xffffffff.
+--			x"01806027", --			nor $t4, $t4, $zero # flip the bits
+--			x"08100008", -- 			j loop # infinite loop; # repeats every n*3 (delay instructions) + 5 (non-delay instructions).
 			others=> x"00000000");
 
 -- The Blinky program reads the DIP switches in the beginning. Let the value read be VAL.
