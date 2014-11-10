@@ -102,10 +102,71 @@ BEGIN
 
       -- insert stimulus here
 	
-		Instr <= x"01490018";
+		-- mult + mfhi + mflo:
+		Instr <= x"3c090005";
+		wait for CLK_PERIOD;
+		
+		Instr <= x"3529000c";
+		wait for CLK_PERIOD;
+		
+		Instr <= x"01290018";
 		wait for CLK_PERIOD * 33;
 		
+		Instr <= x"00004810";
+		wait for CLK_PERIOD;
+		
 		Instr <= x"00005012";
+		wait for CLK_PERIOD;
+		
+
+		-- slra
+		Instr <= x"3c0d0002";
+		wait for CLK_PERIOD * 2;
+		
+		Instr <= x"356b0003";
+		wait for CLK_PERIOD * 2;
+		
+		Instr <= x"016d6006";
+		wait for CLK_PERIOD * 7;
+		
+		-- sra
+		Instr <= x"3c0a00f6";
+		wait for CLK_PERIOD;
+		
+		Instr <= x"000a4b03";
+		wait for CLK_PERIOD * 7;
+		
+		-- bgez
+		Instr <= x"35290064";
+		wait for CLK_PERIOD;
+		
+		Instr <= x"354a00c8";
+		wait for CLK_PERIOD;
+		
+		Instr <= x"012a4820";
+		wait for CLK_PERIOD;
+		
+		Instr <= x"0521fffe";
+		wait for CLK_PERIOD * 20;
+		
+		-- bgezal
+		Instr <= x"35290032";
+		wait for CLK_PERIOD;
+		
+		Instr <= x"354a0064";
+		wait for CLK_PERIOD;
+		
+		Instr <= x"00495022";
+		wait for CLK_PERIOD;
+		
+		Instr <= x"0551fffe";
+		wait for CLK_PERIOD * 20;
+		
+		-- jal
+		Instr <= x"00000022";
+		wait for CLK_PERIOD;
+		
+		Instr <= x"0c100000";
 		
 		wait;
    end process;
