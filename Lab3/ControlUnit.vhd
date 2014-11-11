@@ -30,10 +30,10 @@ entity ControlUnit is
 				MemRead 		: out  STD_LOGIC;	
 				MemtoReg 	: out  STD_LOGIC;	
 				InstrtoReg	: out STD_LOGIC;
-				MemWrite		: out  STD_LOGIC;	
+				CU_MemWrite		: out  STD_LOGIC;	
 				ALUSrc 		: out  STD_LOGIC;	
 				SignExtend 	: out  STD_LOGIC;
-				RegWrite		: out  STD_LOGIC;	
+				CU_RegWrite		: out  STD_LOGIC;	
 				RegDst		: out  STD_LOGIC;	
 				CU_Unknown	: out  STD_LOGIC);
 end ControlUnit;
@@ -70,7 +70,7 @@ MemtoReg <= '1' when opcode = "100011" --lw
 InstrtoReg <= '1' when opcode = "001111" --lui
 			else '0';
 			
-MemWrite <= '1' when opcode = "101011" --sw
+CU_MemWrite <= '1' when opcode = "101011" --sw
 			else '0';
 			
 ALUSrc <= '1' when opcode = "100011" --lw
@@ -88,7 +88,7 @@ SignExtend <= '1' when opcode = "000100" --beq
 			else '1' when opcode = "001010"  --slti
 			else '0';
 			
-RegWrite <= '1' when opcode = "100011" --lw
+CU_RegWrite <= '1' when opcode = "100011" --lw
 			else '1' when opcode = "000000"  --rtype
 			else '1' when opcode = "001000"	--addi
 			else '1' when opcode = "001001"  --addiu

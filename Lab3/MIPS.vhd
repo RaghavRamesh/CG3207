@@ -81,10 +81,10 @@ component ControlUnit is
 			MemRead 		: out  STD_LOGIC;	
 			MemtoReg 	: out  STD_LOGIC;	
 			InstrtoReg	: out  STD_LOGIC; -- true for LUI. When true, Instr(15 downto 0)&x"0000" is written to rt
-			MemWrite		: out  STD_LOGIC;	
+			CU_MemWrite		: out  STD_LOGIC;	
 			ALUSrc 		: out  STD_LOGIC;	
 			SignExtend 	: out  STD_LOGIC; -- false for ORI 
-			RegWrite		: out  STD_LOGIC;	
+			CU_RegWrite		: out  STD_LOGIC;	
 			RegDst		: out  STD_LOGIC;	
 			CU_Unknown	: out  STD_LOGIC);
 end component;
@@ -159,7 +159,8 @@ end component;
 	signal 	InstrtoReg	: 	STD_LOGIC;		
 	signal	ALUSrc 		:  STD_LOGIC;	
 	signal	SignExtend 	: 	STD_LOGIC;
-	signal	RegWrite		: 	STD_LOGIC;	
+	signal	CU_RegWrite	: 	STD_LOGIC;	
+	signal	CU_MemWrite	: 	STD_LOGIC;	
 	signal	RegDst		:  STD_LOGIC;
 	signal   BGEZLINK	 	:  STD_LOGIC;
 	signal   CHECK_ERET	:  STD_LOGIC;
@@ -207,6 +208,7 @@ end component;
 
 
 	signal	PC_plus4 	:  STD_LOGIC_VECTOR (31 downto 0);
+	signal	RegWrite 	:  STD_LOGIC;
 ----------------------------------------------------------------	
 ----------------------------------------------------------------
 -- <MIPS architecture>
@@ -258,10 +260,10 @@ ControlUnit1 	: ControlUnit port map
 						MemRead 		=> MemRead, 
 						MemtoReg 	=> MemtoReg, 
 						InstrtoReg 	=> InstrtoReg, 
-						MemWrite 	=> MemWrite, 
+						CU_MemWrite => CU_MemWrite, 
 						ALUSrc 		=> ALUSrc, 
 						SignExtend 	=> SignExtend, 
-						RegWrite 	=> RegWrite, 
+						CU_RegWrite => CU_RegWrite, 
 						RegDst 		=> RegDst,
 						CU_Unknown 	=> CU_Unknown
 						);
@@ -376,14 +378,17 @@ WriteData_Cause <= x"00000001" when CU_unknown = '1'
 WriteData_EPC <= PC_out when ALU_unknown = '1' or CU_Unknown = '1' or ALU_overflow = '1'
 					  else ReadData2_Reg when Instr(15 downto 11) = "00001"
 					  else ReadData_EPC;
+					  
+RegWrite <=	CU_RegWrite and not (ALU_unknown or CU_Unknown or ALU_overflow);   
+MemWrite <= CU_MemWrite and not (ALU_unknown or CU_Unknown or ALU_overflow);
 
 
-PC_in <= PC_in when ALU_busy = '1'
+PC_in <= PC_out when ALU_busy = '1'
 			else ReadData1_Reg when opcode = "000000" and (Instr(5 downto 0) = "001000" or Instr(5 downto 0) = "001001") --jr/jral
 			else PC_plus4(31 downto 28) & Instr(25 downto 0) & "00" when Jump = '1' and (opcode = "000010" or opcode = "000011")--j/jal
 			else ("00000000000000" & Instr(15 downto 0) & "00") + PC_plus4 when (Branch = '1' and Instr(15) = '0' and ((opcode = "000100" and ALU_zero = '1') or (opcode = "000001" and ALU_OutA(0) = '0'))) --beq / BGEZ
 			else ("11111111111111" & Instr(15 downto 0) & "00") + PC_plus4 when (Branch = '1' and Instr(15) = '1' and ((opcode = "000100" and ALU_zero = '1') or (opcode = "000001" and ALU_OutA(0) = '0'))) --beq / BGEZ
-			else x"FFFFFFFF" when ALU_unknown = '1' or CU_Unknown = '1' or ALU_overflow = '1'
+			else x"004000d8" when ALU_unknown = '1' or CU_Unknown = '1' or ALU_overflow = '1'
 			else ReadData_EPC when Jump = '1' and opcode = "010000" -- eret
 			else PC_plus4;
 Addr_Instr <= PC_out;	
