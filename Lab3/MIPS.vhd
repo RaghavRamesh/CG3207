@@ -378,12 +378,12 @@ WriteData_EPC <= PC_out when ALU_unknown = '1' or CU_Unknown = '1' or ALU_overfl
 					  else ReadData_EPC;
 
 
-PC_in <= PC_in when ALU_busy = '1'
+PC_in <= PC_out when ALU_busy = '1'
 			else ReadData1_Reg when opcode = "000000" and (Instr(5 downto 0) = "001000" or Instr(5 downto 0) = "001001") --jr/jral
 			else PC_plus4(31 downto 28) & Instr(25 downto 0) & "00" when Jump = '1' and (opcode = "000010" or opcode = "000011")--j/jal
 			else ("00000000000000" & Instr(15 downto 0) & "00") + PC_plus4 when (Branch = '1' and Instr(15) = '0' and ((opcode = "000100" and ALU_zero = '1') or (opcode = "000001" and ALU_OutA(0) = '0'))) --beq / BGEZ
 			else ("11111111111111" & Instr(15 downto 0) & "00") + PC_plus4 when (Branch = '1' and Instr(15) = '1' and ((opcode = "000100" and ALU_zero = '1') or (opcode = "000001" and ALU_OutA(0) = '0'))) --beq / BGEZ
-			else x"FFFFFFFF" when ALU_unknown = '1' or CU_Unknown = '1' or ALU_overflow = '1'
+			else x"004000d8" when ALU_unknown = '1' or CU_Unknown = '1' or ALU_overflow = '1'
 			else ReadData_EPC when Jump = '1' and opcode = "010000" -- eret
 			else PC_plus4;
 Addr_Instr <= PC_out;	
