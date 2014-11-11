@@ -328,11 +328,11 @@ ReadAddr2_Reg <= Instr(20 downto 16);
 
 ALU_InA <= ReadData2_Reg when Instr(31 downto 26) = "000000" and (Instr(5 downto 0) = "000000" or Instr(5 downto 0) = "000010" or Instr(5 downto 0) = "000011" or Instr(5 downto 0) = "000110"  or Instr(5 downto 0) = "000100"  or Instr(5 downto 0) = "000111" ) -- sll/srl/sra/sllv/srlv/slra 
 			  else ReadData1_Reg when InstrtoReg = '0'
-			  else Instr(15 downto 0)&x"0000" when InstrtoReg = '1';
+			  else Instr(15 downto 0)&x"0000" when InstrtoReg = '1'; -- lui
 			  
 ALU_InB <= 
 			"000000000000000000000000000" & Instr(10 downto 6) when Instr(31 downto 26) = "000000" and (Instr(5 downto 0) = "000000" or Instr(5 downto 0) = "000010" or Instr(5 downto 0) = "000011") -- sll/srl/sra
-			else ReadData1_Reg when Instr(31 downto 26) = "000000" and (Instr(5 downto 0) = "000110"  or Instr(5 downto 0) = "000100"  or Instr(5 downto 0) = "000111" )
+			else ReadData1_Reg when Instr(31 downto 26) = "000000" and (Instr(5 downto 0) = "000110"  or Instr(5 downto 0) = "000100"  or Instr(5 downto 0) = "000111" ) --srlv/sllv/srav
 			else x"00000000" when InstrtoReg = '1' or Instr(31 downto 26) = "000001" -- lui/bgez/bgezal
 			else ReadData2_Reg when ALUSrc = '0' -- all other r types
 			else "0000000000000000" & Instr(15 downto 0) when (ALUSrc = '1' and Instr(15) = '0' and SignExtend = '1') -- lw/sw
@@ -343,14 +343,14 @@ ALU_WrapperControl <= ALUOp & Instr(5 downto 0);
 Addr_Data <= ALU_OutA;
 
 WriteAddr_Reg <= Instr(15 downto 11) when RegDst = '1'
-				else "11111" when (Instr(20 downto 16) = "10001" and Instr(31 downto 26) = "000001") or Instr(31 downto 26) = "000011" 
-				else Instr(20 downto 16);
+				else "11111" when (Instr(20 downto 16) = "10001" and Instr(31 downto 26) = "000001") or Instr(31 downto 26) = "000011"  -- bgezal/jal 
+				else Instr(20 downto 16);  -- rd
 				
 WriteData_Reg <= ReadData_High when Instr(31 downto 26) = "000000" and Instr(5 downto 0) = "010000" -- MFHI
 					  else ReadData_Lo when Instr(31 downto 26) = "000000" and  Instr(5 downto 0) = "010010" -- MFLO
 					  else ReadData_Cause when Instr(31 downto 21) = "01000000000" and ReadAddr2_Reg = "00000" -- LOAD CAUSE REGISTER
 					  else ReadData_EPC when Instr(31 downto 21) = "01000000000" and ReadAddr2_Reg = "00001" -- LOAD EPC REGISTER
-					  else PC_plus4  when (Instr(20 downto 16) = "10001" and Instr(31 downto 26) = "000001") or Instr(31 downto 26) = "000011" or (opcode = "000000" and Instr(5 downto 0) = "001001") -- jalr 
+					  else PC_plus4  when (Instr(20 downto 16) = "10001" and Instr(31 downto 26) = "000001") or Instr(31 downto 26) = "000011" or (opcode = "000000" and Instr(5 downto 0) = "001001") -- jalr/bgezal 
 					  else ALU_OutA when MemtoReg = '0'
 					  else Data_In when MemtoReg = '1';
 
@@ -359,7 +359,7 @@ Data_Out <= ReadData2_Reg;
 
 PC_plus4 <= PC_out + 4;
 
-HILOWrite <= '1' when opcode = "000000" and (Instr(5 downto 0) = "011000" or Instr(5 downto 0) = "011001" or Instr(5 downto 0) = "011010" or Instr(5 downto 0) = "011011")
+HILOWrite <= '1' when opcode = "000000" and (Instr(5 downto 0) = "011000" or Instr(5 downto 0) = "011001" or Instr(5 downto 0) = "011010" or Instr(5 downto 0) = "011011") -- mult/multu/div/divu
 				else '0';
 				
 WriteData_High <= ALU_OutB;
@@ -368,15 +368,15 @@ WriteData_Lo <= ALU_OutA;
 
 				
 ExceptionReg_Write <= '1' when ALU_unknown = '1' or CU_Unknown = '1' or ALU_overflow = '1'
-				else '1'  when Instr(31 downto 21) = "01000000100"
+				else '1'  when Instr(31 downto 21) = "01000000100" -- mtc0
 				else '0';
 WriteData_Cause <= x"00000001" when CU_unknown = '1'
 						 else x"00000002" when ALU_Unknown = '1'
 						 else x"00000003" when ALU_overflow = '1'
-						 else ReadData2_Reg when Instr(15 downto 11) = "00000"
+						 else ReadData2_Reg when Instr(15 downto 11) = "00000" and Instr(31 downto 21) = "01000000100"
 						 else ReadData_Cause;
 WriteData_EPC <= PC_out when ALU_unknown = '1' or CU_Unknown = '1' or ALU_overflow = '1'
-					  else ReadData2_Reg when Instr(15 downto 11) = "00001"
+					  else ReadData2_Reg when Instr(15 downto 11) = "00001" and Instr(31 downto 21) = "01000000100"
 					  else ReadData_EPC;
 					  
 RegWrite <=	CU_RegWrite and not (ALU_unknown or CU_Unknown or ALU_overflow);   
@@ -388,7 +388,7 @@ PC_in <= PC_out when ALU_busy = '1'
 			else PC_plus4(31 downto 28) & Instr(25 downto 0) & "00" when Jump = '1' and (opcode = "000010" or opcode = "000011")--j/jal
 			else ("00000000000000" & Instr(15 downto 0) & "00") + PC_plus4 when (Branch = '1' and Instr(15) = '0' and ((opcode = "000100" and ALU_zero = '1') or (opcode = "000001" and ALU_OutA(0) = '0'))) --beq / BGEZ
 			else ("11111111111111" & Instr(15 downto 0) & "00") + PC_plus4 when (Branch = '1' and Instr(15) = '1' and ((opcode = "000100" and ALU_zero = '1') or (opcode = "000001" and ALU_OutA(0) = '0'))) --beq / BGEZ
-			else x"004000d8" when ALU_unknown = '1' or CU_Unknown = '1' or ALU_overflow = '1'
+			else x"004000d8" when ALU_unknown = '1' or CU_Unknown = '1' or ALU_overflow = '1' --exception handler
 			else ReadData_EPC when Jump = '1' and opcode = "010000" -- eret
 			else PC_plus4;
 Addr_Instr <= PC_out;	
