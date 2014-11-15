@@ -25,7 +25,7 @@ entity ControlUnit is
 				MemtoRegD 	: out  STD_LOGIC;	
 				MemWriteD	: out  STD_LOGIC;	
 				BranchD 		: out  STD_LOGIC;		
-				ALUOpD 		: out  STD_LOGIC_VECTOR (1 downto 0);
+				ALUOpD 		: out  STD_LOGIC_VECTOR (2 downto 0);
 				ALUSrcD 		: out  STD_LOGIC;	
 				RegDstD		: out  STD_LOGIC);
 
@@ -39,11 +39,11 @@ end ControlUnit;
 architecture arch_ControlUnit of ControlUnit is  
 begin   
 
-ALUOpD <= "00" when opcode = "100011" or opcode = "101011" 	-- LW/SW
-			else "10" when opcode = "000000"							-- R-Type
-			else "11" when opcode = "001101"							-- Ori
-			else "01" when opcode = "000100"							-- Beq
-			else "11" when opcode = "001111";						-- Lui
+ALUOpD <= "000" when opcode = "100011" or opcode = "101011" 	-- LW/SW
+			else "010" when opcode = "000000"							-- R-Type
+			else "011" when opcode = "001101"							-- Ori
+			else "001" when opcode = "000100"							-- Beq
+			else "011" when opcode = "001111";						-- Lui
 			
 BranchD <= '1' when opcode = "000100"
 	  else '0';

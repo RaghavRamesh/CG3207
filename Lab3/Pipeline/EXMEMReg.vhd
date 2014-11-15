@@ -32,6 +32,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 entity EXMemReg is
 
 Port ( 	CLK 				: in  STD_LOGIC;
+			FlushE			: in 	STD_LOGIC;
 			RegWriteE		: in  STD_LOGIC;	
 			MemtoRegE		: in  STD_LOGIC;	
 			MemWriteE		: in  STD_LOGIC;
@@ -61,11 +62,24 @@ architecture Behavioral of ExMemReg is
 
 begin
 
-process(CLK)
+process(CLK, FlushE)
 
 	begin
 	
-	if (CLK'event and CLK='1') then 
+	if FlushE='1' then 
+	
+		RegWriteM  			<= '0';	 
+		MemtoRegM 			<= '0';
+		MemWriteM 			<= '0';
+		BranchM 				<= '0';
+		ALU_ZeroM 			<= '0';
+		ALU_OutAM 			<= (others => '0');
+		WriteDataM			<= (others => '0');
+   	WriteAddrRegM 		<= (others => '0');
+		PCBranchM			<= (others => '0');
+		PCSrcM				<= '0';
+	
+	elsif (CLK'event and CLK='1') then 
 	
 		RegWriteM  			<= RegWriteE;	 
 		MemtoRegM 			<= MemtoRegE;			

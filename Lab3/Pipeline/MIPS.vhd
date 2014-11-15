@@ -66,17 +66,17 @@ end component;
 component ControlUnit is
     Port ( 	
 			opcode 		: in   STD_LOGIC_VECTOR (5 downto 0);
-			ALUOp 		: out  STD_LOGIC_VECTOR (1 downto 0);
-			Branch 		: out  STD_LOGIC;
-			Jump	 		: out  STD_LOGIC;				
-			MemRead 		: out  STD_LOGIC;	
-			MemtoReg 	: out  STD_LOGIC;	
-			InstrtoReg	: out  STD_LOGIC; -- true for LUI. When true, Instr(15 downto 0)&x"0000" is written to rt
-			MemWrite		: out  STD_LOGIC;	
-			ALUSrc 		: out  STD_LOGIC;	
-			SignExtend 	: out  STD_LOGIC; -- false for ORI 
-			RegWrite		: out  STD_LOGIC;	
-			RegDst		: out  STD_LOGIC);
+			ALUOpD 		: out  STD_LOGIC_VECTOR (2 downto 0);
+			BranchD 		: out  STD_LOGIC;
+--			Jump	 		: out  STD_LOGIC;				
+--			MemRead 		: out  STD_LOGIC;	
+			MemtoRegD 	: out  STD_LOGIC;	
+--			InstrtoReg	: out  STD_LOGIC; -- true for LUI. When true, Instr(15 downto 0)&x"0000" is written to rt
+			MemWriteD	: out  STD_LOGIC;	
+			ALUSrcD		: out  STD_LOGIC;
+--			SignExtend 	: out  STD_LOGIC; -- false for ORI 
+			RegWriteD		: out  STD_LOGIC;	
+			RegDstD		: out  STD_LOGIC);
 end component;
 
 ----------------------------------------------------------------
@@ -97,6 +97,7 @@ end component;
 component IFIDReg is 
     Port ( 
 			CLK 				: in  STD_LOGIC;
+			StallIFID		: in 	STD_LOGIC;
 			PC_F 				: in  STD_LOGIC_VECTOR (31 downto 0);
          InstrF 			: in  STD_LOGIC_VECTOR (31 downto 0);
          PC_D 				: out  STD_LOGIC_VECTOR (31 downto 0);
@@ -107,7 +108,7 @@ component IDEXReg is
 
 Port (
 		CLK 					: in STD_LOGIC;
-
+		StallIDEX			: in STD_LOGIC;
 		RegWriteD			: in  STD_LOGIC;	
 		MemtoRegD 			: in  STD_LOGIC;	
 		MemWriteD			: in  STD_LOGIC;	
@@ -145,6 +146,7 @@ end component;
 component EXMEMReg is
 
 Port ( 	CLK 				: in  STD_LOGIC;
+			FlushE			: in 	STD_LOGIC;
 			RegWriteE		: in  STD_LOGIC;	
 			MemtoRegE		: in  STD_LOGIC;	
 			MemWriteE		: in  STD_LOGIC;
@@ -300,6 +302,16 @@ end component;
 	signal	ALU_OutAW		: STD_LOGIC_VECTOR(31 downto 0);
 	signal 	ReadDataW		: STD_LOGIC_VECTOR(31 downto 0);
 	signal 	WriteAddrRegW	: STD_LOGIC_VECTOR(4 downto 0);
+	
+	-- Stall/Clear Signals
+	
+	signal StallIFID			: STD_LOGIC;
+	signal StallIDEX			: STD_LOGIC;
+	signal CLREXMem			: STD_LOGIC;
+	signal FlushE				: STD_LOGIC;
+	
+	signal LWStall				: STD_LOGIC;
+	
 		
 ----------------------------------------------------------------	
 ----------------------------------------------------------------
@@ -337,17 +349,17 @@ ALU1 				: ALU port map
 ControlUnit1 	: ControlUnit port map
 						(
 						opcode 		=> opcode, 
-						ALUOp 		=> ALUOp, 
-						Branch 		=> Branch, 
-						Jump 			=> Jump, 
-						MemRead 		=> MemRead, 
-						MemtoReg 	=> MemtoReg, 
-						InstrtoReg 	=> InstrtoReg, 
-						MemWrite		=> MemWrite, 
-						ALUSrc 		=> ALUSrc, 
-						SignExtend 	=> SignExtend, 
-						RegWrite 	=> RegWrite, 
-						RegDst		=> RegDst
+						ALUOpD 		=> ALUOpD, 
+						BranchD 		=> BranchD, 
+--						Jump 			=> Jump, 
+--						MemRead 		=> MemRead, 
+						MemtoRegD 	=> MemtoRegD, 
+--						InstrtoReg 	=> InstrtoReg, 
+						MemWriteD		=> MemWriteD, 
+						ALUSrcD 		=> ALUSrcD, 
+--						SignExtend 	=> SignExtend, 
+						RegWriteD 	=> RegWriteD, 
+						RegDstD		=> RegDstD
 						);
 						
 ----------------------------------------------------------------
@@ -368,6 +380,7 @@ RegFile1			: RegFile port map
 IFIDReg1			: IFIDReg port map
 						(
 						CLK 					=> CLK,
+						StallIFID			=> StallIFID,
 						PC_F 					=> PC_F,
 						InstrF 				=> InstrF,
 						PC_D 					=> PC_D,
@@ -377,6 +390,7 @@ IFIDReg1			: IFIDReg port map
 IDEXReg1			: IDEXReg port map
 						(
 						CLK 					=> CLK,
+						StallIDEX			=> StallIDEX,
 						RegWriteD 			=> RegWriteD,
 						MemtoRegD  			=> MemtoRegD, 
 						MemWriteD 			=> MemWriteD, 
@@ -411,6 +425,7 @@ IDEXReg1			: IDEXReg port map
 EXMemReg1		: ExMemReg port map
 						(
 						CLK 				=> CLK,
+						FlushE			=> FlushE,
 						RegWriteE 		=> RegWriteE,
 						MemtoRegE 		=> MemtoRegE,
 						MemWriteE 		=> MemWriteE,
@@ -475,6 +490,15 @@ MemWBReg1		: MemWBReg port map
 	RtD <= InstrD(20 downto 16);
 	RdD <= InstrD(15 downto 11);
 	
+	LWStall <= '1' when (ReadAddr1_Reg = RtE)  
+				else '1' when (RtD = RtE)
+				else '1' when MemtoRegE = '1'
+				else '0';
+				
+	StallIFID <= '1' when LWStall = '1';
+	StallIDEX <= '1' when LWStall = '1';
+	FlushE <= '1' when LWStall = '1';
+	
 	ImmediateD 	<= ("0000000000000000" & InstrD(15 downto 0)) when InstrD(15) = '0'
 					else ("1111111111111111" & InstrD(15 downto 0)) when InstrD(15) = '1';
 	
@@ -495,7 +519,7 @@ MemWBReg1		: MemWBReg port map
 	WriteAddrRegE 	<= RtE when RegDst = '0' 
 						else RdE;
 						
-	PCBranchE <= (ImmediateE & "00") + PC_E;
+	PCBranchE <= (ImmediateE(29 downto 0) & "00") + PC_E;
 		
 -- Memory Stage
 

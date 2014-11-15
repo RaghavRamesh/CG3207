@@ -33,7 +33,7 @@ entity IDEXReg is
 	
 	Port (
 			CLK 					: in STD_LOGIC;
-
+			StallIDEX			: in STD_LOGIC;
 			RegWriteD			: in  STD_LOGIC;	
 			MemtoRegD 			: in  STD_LOGIC;	
 			MemWriteD			: in  STD_LOGIC;	
@@ -48,7 +48,6 @@ entity IDEXReg is
 			RdD					: in STD_LOGIC_VECTOR (4 downto 0);
 			ImmediateD			: in STD_LOGIC_VECTOR (31 downto 0);
 			InstrD 				: in  STD_LOGIC_VECTOR (31 downto 0);
-
 			
 			RegWriteE			: out  STD_LOGIC;	
 			MemtoRegE 			: out  STD_LOGIC;	
@@ -72,11 +71,11 @@ architecture Behavioral of IDEXReg is
 
 begin
 
-process (CLK)
+process (CLK, StallIDEX)
 
 	begin
 
-		if (CLK'event and CLK='1') then
+		if (CLK'event and CLK='1' and StallIDEX='0') then
 
 				RegWriteE 		<= RegWriteD;
 				MemtoRegE 		<= MemtoRegD;

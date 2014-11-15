@@ -31,6 +31,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 
 entity IFIDReg is
     Port ( CLK 				: in  STD_LOGIC;
+			  StallIFID			: in  STD_LOGIC;
 			  PC_F 				: in  STD_LOGIC_VECTOR (31 downto 0);
            InstrF 			: in  STD_LOGIC_VECTOR (31 downto 0);
            PC_D 				: out  STD_LOGIC_VECTOR (31 downto 0);
@@ -40,10 +41,10 @@ end IFIDReg;
 architecture Behavioral of IFIDReg is
 
 begin
-process(CLK)
+process(CLK, StallIFID)
 begin
 
-if (CLK'event and CLK='1') then
+if (CLK'event and CLK='1' and StallIFID='0') then
 	PC_D <= PC_F;
 	InstrD <= InstrF;
 end if;
